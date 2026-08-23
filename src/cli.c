@@ -76,6 +76,7 @@ void cli_parse(int argc, char *argv[], cli_options *opts) {
         opts->out_mode = CLI_OUT_AOUT;
         opts->debug_lexer = false;
         opts->debug_ast = false;
+        opts->use_qbe = false;
 
         // Exits if user does not provide any file
         if (argc < 2) {
@@ -126,6 +127,9 @@ void cli_parse(int argc, char *argv[], cli_options *opts) {
                 } else if (strcmp(argv[arg_indx], "--debug-ast") == 0) {
                         opts->debug_ast = true;
                         arg_indx++;
+                } else if (strcmp(argv[arg_indx], "--qbe") == 0) {
+                        opts->use_qbe = true;
+                        arg_indx++;
                 }
                 // Unrecognized and invalid flag handling
                 else {
@@ -153,6 +157,8 @@ void cli_print_help() {
         printf("  %-20s\tEnable all debugging functions.\n", "--debug-all");
         printf("  %-20s\tEnable debugging functions for lexer.\n", "--debug-lexer");
         printf("  %-20s\tEnable debugging functions for ast.\n", "--debug-ast");
+        printf("\n");
+        printf("  %-20s\tCompile via the QBE backend (emits QBE IL).\n", "--qbe");
         printf("\n");
         printf("  %-20s\tDisplay pinum version information.\n", "-v, --version");
         printf("  %-20s\tUpdate pinum to the latest version.\n", "-u, --update");

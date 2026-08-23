@@ -1,13 +1,13 @@
 fn greet() {
         println("hi")
 }
-fn add(int a, int b) -> int {
+fn add(int a, int b) : int {
         return a + b
 }
-fn sum_three(int a, int b, int c) -> int {
+fn sum_three(int a, int b, int c) : int {
         return add(add(a, b), c)
 }
-fn factorial(int n) -> int {
+fn factorial(int n) : int {
         if (n <= 1) {
                 return 1
         }

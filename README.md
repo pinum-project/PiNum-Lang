@@ -266,9 +266,9 @@ nums[1] = 99
 
 ### Functions
 ```pinum
-# define with: fn name(params) -> returnType { ... }
-# the '-> returnType' is optional; omit it for a void function.
-fn square(int n) -> int {
+# define with: fn name(params): returnType { ... }
+# the ': returnType' part is optional; omit it for a void function.
+fn square(int n): int {
         return n * n
 }
 fn greet() {
@@ -276,7 +276,7 @@ fn greet() {
 }
 
 # recursion
-fn factorial(int n) -> int {
+fn factorial(int n): int {
         if (n <= 1) {
                 return 1
         }

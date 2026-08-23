@@ -60,6 +60,7 @@ typedef struct {
         cli_out_mode out_mode;
         bool debug_lexer;
         bool debug_ast;
+        bool use_qbe; // emit QBE IL instead of C (new backend)
 } cli_options;
 
 // parses argv[1..], fills *opts; exits on usage errors.

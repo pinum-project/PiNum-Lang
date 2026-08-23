@@ -268,9 +268,26 @@ static bool is_valid_modifier(const char *modifier, const char *data_type) {
 }
 
 // parse a type: simple (int, float, etc.) or generic (vec<int>)
-static void parse_type(Parser *parser, char **out_type_name, char **out_element_type) {
+static void parse_type(Parser *parser, char **out_modifier, char **out_type_name, char **out_element_type) {
+        *out_modifier = NULL;
         *out_type_name = NULL;
         *out_element_type = NULL;
+
+        // optional modifier (short / long / unsigned / signed)
+        token modifier_tok = {0};
+        if (match(parser, TOKEN_UNSIGNED)) {
+                *out_modifier = "unsigned";
+                modifier_tok = parser->tokens->tokens[parser->current - 1];
+        } else if (match(parser, TOKEN_SIGNED)) {
+                *out_modifier = "signed";
+                modifier_tok = parser->tokens->tokens[parser->current - 1];
+        } else if (match(parser, TOKEN_LONG)) {
+                *out_modifier = "long";
+                modifier_tok = parser->tokens->tokens[parser->current - 1];
+        } else if (match(parser, TOKEN_SHORT)) {
+                *out_modifier = "short";
+                modifier_tok = parser->tokens->tokens[parser->current - 1];
+        }
 
         if (match(parser, TOKEN_INT)) *out_type_name = "int";
         else if (match(parser, TOKEN_FLOAT)) *out_type_name = "float";
@@ -297,34 +314,19 @@ static void parse_type(Parser *parser, char **out_type_name, char **out_element_
                 token found = peek(parser);
                 pinum_expected_at(STAGE_PARSER, found.line, found.col, "a data type (int, float, vec<int>, etc.)", peek_display(parser));
         }
+
+        // validate the modifier/base combination (e.g. reject "long float")
+        if (*out_modifier && !is_valid_modifier(*out_modifier, *out_type_name)) {
+                pinum_error_at(STAGE_PARSER, ERR_INVALID_MODIFIER, modifier_tok.line, modifier_tok.col, *out_modifier);
+        }
 }
 ASTnode *parse_declaration(Parser *parser) {
         char *modifier = NULL;
         char *data_type = NULL;
         char *element_type = NULL;
-        token modifier_token = {0};
 
-        // Modifier (optional)
-        if (match(parser, TOKEN_UNSIGNED)) {
-                modifier = "unsigned";
-                modifier_token = parser->tokens->tokens[parser->current - 1];
-        } else if (match(parser, TOKEN_SIGNED)) {
-                modifier = "signed";
-                modifier_token = parser->tokens->tokens[parser->current - 1];
-        } else if (match(parser, TOKEN_LONG)) {
-                modifier = "long";
-                modifier_token = parser->tokens->tokens[parser->current - 1];
-        } else if (match(parser, TOKEN_SHORT)) {
-                modifier = "short";
-                modifier_token = parser->tokens->tokens[parser->current - 1];
-        }
-
-        // Data Type (Required) - supports generic types like vec<int>
-        parse_type(parser, &data_type, &element_type);
-
-        if (!is_valid_modifier(modifier, data_type)) {
-                pinum_error_at(STAGE_PARSER, ERR_INVALID_MODIFIER, modifier_token.line, modifier_token.col, modifier);
-        }
+        // Data Type (Required) - supports modifiers and generic types like vec<int>
+        parse_type(parser, &modifier, &data_type, &element_type);
 
         // Veriable name
         token name_token = consume(parser, TOKEN_ID, "a variable name");
@@ -360,14 +362,9 @@ ASTnode *parse_block(Parser *parser) {
 // - Function parsing -
 ASTnode *parse_func_def_param(Parser *parser) {
         char *modifier = NULL;
-        if (match(parser, TOKEN_UNSIGNED)) modifier = "unsigned";
-        else if (match(parser, TOKEN_SIGNED)) modifier = "signed";
-        else if (match(parser, TOKEN_LONG)) modifier = "long";
-        else if (match(parser, TOKEN_SHORT)) modifier = "short";
-
         char *type_name = NULL;
         char *element_type = NULL;
-        parse_type(parser, &type_name, &element_type);
+        parse_type(parser, &modifier, &type_name, &element_type);
 
         token name_token = consume(parser, TOKEN_ID, "a parameter name");
         ASTnode *param = make_var_decl_node(type_name, modifier, name_token.value, NULL, false, 0);
@@ -398,18 +395,22 @@ ASTnode *parse_func_def(Parser *parser) {
 
         char *return_type = NULL;
         char *ret_element = NULL;
-        // optional '->' return type; omitting it means void
-        if (check(parser, TOKEN_MINUS)) {
-                advance(parser); // consume '-'
-                consume(parser, TOKEN_RABRACKET, "'>' after '-'");
-                parse_type(parser, &return_type, &ret_element);
+        char *ret_modifier = NULL;
+        char *ret_storage = NULL; // owns the combined / vec_<T> return-type string
+        // optional ':' return type; omitting it means void
+        if (check(parser, TOKEN_COLON)) {
+                advance(parser); // consume ':'
+                parse_type(parser, &ret_modifier, &return_type, &ret_element);
         } else {
                 return_type = "void";
         }
 
-        // resolve vec<T> → vec_T for the return type (mirrors codegen_decl_type)
-        char *ret_storage = NULL;
-        if (strcmp(return_type, "vec") == 0 && ret_element) {
+        // build the final return type: modifier + base (e.g. "long int"), or vec<T> → vec_T
+        if (ret_modifier) {
+                ret_storage = malloc(strlen(ret_modifier) + strlen(return_type) + 2);
+                sprintf(ret_storage, "%s %s", ret_modifier, return_type);
+                return_type = ret_storage;
+        } else if (strcmp(return_type, "vec") == 0 && ret_element) {
                 ret_storage = malloc(strlen("vec_") + strlen(ret_element) + 1);
                 sprintf(ret_storage, "vec_%s", ret_element);
                 return_type = ret_storage;

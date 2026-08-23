@@ -1,13 +1,13 @@
 fn greet() {
         println("Hello from a function!")
 }
-fn add(int a, int b) -> int {
+fn add(int a, int b) : int {
         return a + b
 }
-fn sum_three(int a, int b, int c) -> int {
+fn sum_three(int a, int b, int c) : int {
         return add(add(a, b), c)
 }
-fn factorial(int n) -> int {
+fn factorial(int n) : int {
         if (n <= 1) {
                 return 1
         }
@@ -18,8 +18,8 @@ fn main() {
 # Functions in PiNum-Lang
 #
 # Define a function with the `fn` keyword:
-#   fn name(params) -> returnType { ... }
-# The `-> returnType` part is optional; omit it for a void function.
+#   fn name(params): returnType { ... }
+# The ': returnType' part is optional; omit it for a void function.
 
 # --- a void function (no return value) ---
 
