@@ -2,7 +2,7 @@
   <img src="extras/assets/pinum_logo.svg" alt="PiNum Logo" width="200" />
 </p>
 
-# PiNum-Lang 1.3.0-beta2
+# PiNum-Lang 1.3.3-beta
 
 https://pinum-project.github.io - official site for pinum. check for documentation and other info.
 PiNum (represented by the `.pn` extension) is a lightweight, C-inspired programming language currently under development.
