@@ -2,7 +2,7 @@ fn main() {
 # for (RANGE) — run a body a fixed number of times.
 #
 # `for (N) { body }` expands at parse time to a classic for loop:
-#     for (int __pinum_i0 = 0; __pinum_i0 < N; __pinum_i0++) { body }
+#     for (int32 __pinum_i0 = 0; __pinum_i0 < N; __pinum_i0++) { body }
 # Each range loop gets a unique hidden counter, so nesting just works.
 
 # --- basic count ---
@@ -11,13 +11,13 @@ for (4) {
 }
 
 # --- the range is any expression, re-evaluated each iteration ---
-int rows = 3
+int32 rows = 3
 for (rows) {
         print("row\n")
 }
 
 # --- the range as an inline expression ---
-int base = 2
+int32 base = 2
 for (base * 3) {
         print("multi\n")
 }
@@ -32,7 +32,7 @@ for (3) {
 
 # --- a pyramid: the outer classic loop owns the counter, ---
 # --- range loops just repeat fixed widths per row           ---
-int width = 1
+int32 width = 1
 while (width <= 7) {
         for (width) {
                 print('#')

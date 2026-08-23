@@ -1,8 +1,8 @@
 fn main() {
 # Lexer: basic tokens and literals
-int my_val = 42;
-float f = 3.14159;
-double d = 2.718;
+int32 my_val = 42;
+float32 f = 3.14159;
+float64 d = 2.718;
 char c = 'A';
 string s = "Hello, PiNum!";
 bool is_active = true;

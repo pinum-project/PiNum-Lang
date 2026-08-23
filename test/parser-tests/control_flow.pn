@@ -1,6 +1,6 @@
 fn main() {
 # Parser: control flow (if-else)
-int x = 10;
+int32 x = 10;
 if (x > 10) {
         print("Greater\n");
 } else if (x == 10) {

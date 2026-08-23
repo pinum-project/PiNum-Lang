@@ -1,10 +1,10 @@
 fn main() {
 # Semicolons are optional — a newline ends a statement.
 # They ARE required to put multiple statements on one line:
-#   int x = 1; print(x, "\n");   # two statements, one line
+#   int32 x = 1; print(x, "\n");   # two statements, one line
 # arithmetic
-int a = 10;
-int b = 3
+int32 a = 10;
+int32 b = 3
 print(a + b, "\n")
 print(a - b, "\n"); print(a * b, "\n")
 print(a / b, "\n")
@@ -24,7 +24,7 @@ print(first + second + "!", "\n")
 print("concatenation works with " + "literals too", "\n")
 
 # precedence: * and / bind tighter than + and -
-int c = 4
+int32 c = 4
 print(a + b * c, "\n")
 print((a + b) * c, "\n")
 
@@ -44,7 +44,7 @@ print(t || f, "\n")
 print(t && t || f, "\n")
 
 # expressions in assignments
-int result = a + b
+int32 result = a + b
 print(result, "\n")
 result = (a + b) * c
 print(result, "\n")
@@ -52,10 +52,10 @@ print(result, "\n")
 # ternary: condition ? then : else
 print(a > b ? 100 : 200, "\n")
 print(a < b ? 100 : 200, "\n")
-int max = a > b ? a : b
+int32 max = a > b ? a : b
 print(max, "\n")
 
-int data
+int32 data
 print('Enter data: ')
 read(data)
 print(data, '\n')

@@ -558,18 +558,26 @@ token lexer_tokenize_words(FILE *buffer) {
         // - Identifying and handling ID, veriable and datatypes -
         tokens.value = char_buffer;
 
-        if (strcmp(char_buffer, "int") == 0) {
-                if (SQUOTE_MODE || DQUOTE_MODE) {
-                        tokens.type = TOKEN_QSTRING;
-                } else {
-                        tokens.type = TOKEN_INT;
-                }
-        } else if (strcmp(char_buffer, "float") == 0) {
-                if (SQUOTE_MODE || DQUOTE_MODE) {
-                        tokens.type = TOKEN_QSTRING;
-                } else {
-                        tokens.type = TOKEN_FLOAT;
-                }
+        if (strcmp(char_buffer, "int8") == 0) {
+                tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_INT8;
+        } else if (strcmp(char_buffer, "int16") == 0) {
+                tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_INT16;
+        } else if (strcmp(char_buffer, "int32") == 0) {
+                tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_INT32;
+        } else if (strcmp(char_buffer, "int64") == 0) {
+                tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_INT64;
+        } else if (strcmp(char_buffer, "uint8") == 0) {
+                tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_UINT8;
+        } else if (strcmp(char_buffer, "uint16") == 0) {
+                tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_UINT16;
+        } else if (strcmp(char_buffer, "uint32") == 0) {
+                tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_UINT32;
+        } else if (strcmp(char_buffer, "uint64") == 0) {
+                tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_UINT64;
+        } else if (strcmp(char_buffer, "float32") == 0) {
+                tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_FLOAT32;
+        } else if (strcmp(char_buffer, "float64") == 0) {
+                tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_FLOAT64;
         } else if (strcmp(char_buffer, "print") == 0) {
                 if (SQUOTE_MODE || DQUOTE_MODE) {
                         tokens.type = TOKEN_QSTRING;
@@ -643,29 +651,13 @@ token lexer_tokenize_words(FILE *buffer) {
                         tokens.type = TOKEN_READ;
                 }
         } else if (strcmp(char_buffer, "long") == 0) {
-                if (SQUOTE_MODE || DQUOTE_MODE) {
-                        tokens.type = TOKEN_QSTRING;
-                } else {
-                        tokens.type = TOKEN_LONG;
-                }
+                tokens.type = TOKEN_ID;
         } else if (strcmp(char_buffer, "short") == 0) {
-                if (SQUOTE_MODE || DQUOTE_MODE) {
-                        tokens.type = TOKEN_QSTRING;
-                } else {
-                        tokens.type = TOKEN_SHORT;
-                }
+                tokens.type = TOKEN_ID;
         } else if (strcmp(char_buffer, "signed") == 0) {
-                if (SQUOTE_MODE || DQUOTE_MODE) {
-                        tokens.type = TOKEN_QSTRING;
-                } else {
-                        tokens.type = TOKEN_SIGNED;
-                }
+                tokens.type = TOKEN_ID;
         } else if (strcmp(char_buffer, "unsigned") == 0) {
-                if (SQUOTE_MODE || DQUOTE_MODE) {
-                        tokens.type = TOKEN_QSTRING;
-                } else {
-                        tokens.type = TOKEN_UNSIGNED;
-                }
+                tokens.type = TOKEN_ID;
         } else if (strcmp(char_buffer, "bool") == 0) {
                 if (SQUOTE_MODE || DQUOTE_MODE) {
                         tokens.type = TOKEN_QSTRING;
@@ -673,11 +665,7 @@ token lexer_tokenize_words(FILE *buffer) {
                         tokens.type = TOKEN_BOOL;
                 }
         } else if (strcmp(char_buffer, "double") == 0) {
-                if (SQUOTE_MODE || DQUOTE_MODE) {
-                        tokens.type = TOKEN_QSTRING;
-                } else {
-                        tokens.type = TOKEN_DOUBLE;
-                }
+                tokens.type = TOKEN_ID;
         } else if (strcmp(char_buffer, "char") == 0) {
                 if (SQUOTE_MODE || DQUOTE_MODE) {
                         tokens.type = TOKEN_QSTRING;
@@ -846,22 +834,28 @@ const char *lexer_token_type_to_string(tokenType type) {
                 return "TOKEN_CONTINUE";
         case TOKEN_FN:
                 return "TOKEN_FN";
-        case TOKEN_LONG:
-                return "TOKEN_LONG";
-        case TOKEN_SHORT:
-                return "TOKEN_SHORT";
-        case TOKEN_SIGNED:
-                return "TOKEN_SIGNED";
-        case TOKEN_UNSIGNED:
-                return "TOKEN_UNSIGNED";
         case TOKEN_BOOL:
                 return "TOKEN_BOOL";
-        case TOKEN_INT:
-                return "TOKEN_INT";
-        case TOKEN_FLOAT:
-                return "TOKEN_FLOAT";
-        case TOKEN_DOUBLE:
-                return "TOKEN_DOUBLE";
+        case TOKEN_INT8:
+                return "TOKEN_INT8";
+        case TOKEN_INT16:
+                return "TOKEN_INT16";
+        case TOKEN_INT32:
+                return "TOKEN_INT32";
+        case TOKEN_INT64:
+                return "TOKEN_INT64";
+        case TOKEN_UINT8:
+                return "TOKEN_UINT8";
+        case TOKEN_UINT16:
+                return "TOKEN_UINT16";
+        case TOKEN_UINT32:
+                return "TOKEN_UINT32";
+        case TOKEN_UINT64:
+                return "TOKEN_UINT64";
+        case TOKEN_FLOAT32:
+                return "TOKEN_FLOAT32";
+        case TOKEN_FLOAT64:
+                return "TOKEN_FLOAT64";
         case TOKEN_CHAR:
                 return "TOKEN_CHAR";
         case TOKEN_STRING:

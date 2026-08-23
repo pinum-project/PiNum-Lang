@@ -1,6 +1,6 @@
 fn main() {
 # Codegen: method calls — obj.append(x)  →  __pinum_vec_<t>_append(&obj, x)
-vec<int> nums = [1, 2];
+vec<int32> nums = [1, 2];
 nums.append(3);
 nums.append(4);
 print(nums, "\n");
@@ -13,7 +13,7 @@ vec<string> words = ["a"];
 words.append("b");
 words.append("c");
 print(words, "\n");
-vec<float> ratios = [0.5];
+vec<float32> ratios = [0.5];
 ratios.append(1.5);
 print(ratios, "\n");
 vec<char> letters = ['x'];
@@ -21,7 +21,7 @@ letters.append('y');
 print(letters, "\n");
 
 # args can be expressions
-int step = 10;
+int32 step = 10;
 nums.append(step + 100);
 print(nums, "\n");
 }

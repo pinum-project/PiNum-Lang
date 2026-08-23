@@ -1,7 +1,7 @@
 fn main() {
 # Codegen: if / else / else if
-int a = 10;
-int b = 3;
+int32 a = 10;
+int32 b = 3;
 if (a > b) {
         print("a is bigger\n");
 }

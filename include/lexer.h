@@ -54,16 +54,19 @@ typedef enum {
         TOKEN_CONTINUE, // keyword continue
         TOKEN_FN,       // keyword fn, defines a function
         // Data types
-        TOKEN_LONG,     // long prefix
-        TOKEN_SHORT,    // short prefix
-        TOKEN_SIGNED,   // signed prefix
-        TOKEN_UNSIGNED, // unsigned prefix
         TOKEN_BOOL,     // boolean data type
-        TOKEN_INT,      // int datatype
-        TOKEN_FLOAT,    // float datatype
-        TOKEN_DOUBLE,   // double datatype
+        TOKEN_INT8,     // 8-bit signed integer
+        TOKEN_INT16,    // 16-bit signed integer
+        TOKEN_INT32,    // 32-bit signed integer
+        TOKEN_INT64,    // 64-bit signed integer
+        TOKEN_UINT8,    // 8-bit unsigned integer
+        TOKEN_UINT16,   // 16-bit unsigned integer
+        TOKEN_UINT32,   // 32-bit unsigned integer
+        TOKEN_UINT64,   // 64-bit unsigned integer
+        TOKEN_FLOAT32,  // 32-bit IEEE float
+        TOKEN_FLOAT64,  // 64-bit IEEE float
         TOKEN_CHAR,     // char datatype
-        TOKEN_STRING,   // string datatype, basiclly char array in the transpiled code
+        TOKEN_STRING,   // string datatype, basically char array in the transpiled code
         TOKEN_VEC,      // vec datatype (generic)
         TOKEN_TRUE,     // boolean literal true
         TOKEN_FALSE,    // boolean literal false

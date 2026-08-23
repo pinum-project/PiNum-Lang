@@ -5,14 +5,14 @@ fn main() {
 # storage — vec_int, vec_float, vec_double, vec_char, vec_bool, vec_string —
 # so there is no pointer boxing and elements are cache-friendly.
 
-# --- int vector (literal syntax [ ... ]) ---
-vec<int> nums = [3, 5, 6]
+# --- int32 vector (literal syntax [ ... ]) ---
+vec<int32> nums = [3, 5, 6]
 print(nums, "\n")
 
-# --- float / double ---
-vec<float> ratios = [1.5, 2.5]
+# --- float32 / float64 ---
+vec<float32> ratios = [1.5, 2.5]
 print(ratios, "\n")
-vec<double> dbl = [3.14159, 2.71828]
+vec<float64> dbl = [3.14159, 2.71828]
 print(dbl, "\n")
 
 # --- char / bool / string ---
@@ -27,7 +27,7 @@ print(words, "\n")
 print("nums: ", nums, " | words: ", words, "\n")
 
 # --- empty vector ---
-vec<int> empty = []
+vec<int32> empty = []
 print(empty, "\n")
 
 # --- runtime helpers also expose append (wired when methods land) ---
@@ -45,7 +45,7 @@ print(words, "\n")
 print("nums size: ", nums.size, "\n")
 
 # --- method call args can be any expression ---
-int extra = 21
+int32 extra = 21
 nums.append(extra * 2)
 print(nums, "\n")
 
@@ -55,7 +55,7 @@ nums[0] = 99
 print("after nums[0] = 99: ", nums, "\n")
 
 # the index can be any expression; so can the value
-int idx = 1
+int32 idx = 1
 nums[idx] = nums[idx] * 10
 nums[2] = extra + 1
 print(nums, "\n")

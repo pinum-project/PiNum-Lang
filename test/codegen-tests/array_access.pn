@@ -1,6 +1,6 @@
 fn main() {
 # Codegen: arr[i] reads — every vec element type, in bounds
-vec<int> nums = [10, 20, 30];
+vec<int32> nums = [10, 20, 30];
 print(nums[0], " ", nums[2], "\n");
 
 # expression index
@@ -9,7 +9,7 @@ print(nums[1 + 1], "\n");
 vec<string> words = ["PiNum", "rocks"];
 print(words[0], " ", words[1], "\n");
 
-vec<float> ratios = [1.5, 2.5];
+vec<float32> ratios = [1.5, 2.5];
 print(ratios[1], "\n");
 
 vec<char> letters = ['a', 'b', 'c'];
@@ -27,7 +27,7 @@ nums[1 + 1] = nums[0] - 9;
 print("after expr write: ", nums[2], "\n");
 
 # variable index
-int i = 1;
+int32 i = 1;
 nums[i] = nums[i] + 1;
 print("after var-index write: ", nums[1], "\n");
 

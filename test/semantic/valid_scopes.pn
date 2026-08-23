@@ -1,13 +1,13 @@
 fn main() {
 # Semantic valid: nested scopes and block-local declarations
-int a = 10
+int32 a = 10
 if (a > 5) {
-        int a = 20
+        int32 a = 20
         print(a, "\n")
 }
 print(a, "\n")
-for (int i = 0; i < 3; i++) {
-        int doubled = i * 2
+for (int32 i = 0; i < 3; i++) {
+        int32 doubled = i * 2
         print(doubled, "\n")
 }
 print(a, "\n")

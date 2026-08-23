@@ -8,8 +8,8 @@ https://pinum-project.github.io - official site for pinum. check for documentati
 PiNum (represented by the `.pn` extension) is a lightweight, C-inspired programming language currently under development.
 ## ✨ Features
 
-- **C-Style Syntax:** Familiar data types (`int`, `float`, `double`, `char`, `string`, `bool`) and control structures (`if`, `else`, `return`, `while`, `for`).
-- **Type Modifiers:** `long`, `short`, `unsigned`, `signed`, and `long double` are supported on the appropriate base types.
+- **C-Style Syntax:** Familiar, fixed-width data types (`int8`/`int16`/`int32`/`int64`, `uint8`/`uint16`/`uint32`/`uint64`, `float32`/`float64`, `char`, `string`, `bool`) and control structures (`if`, `else`, `return`, `while`, `for`).
+- **Explicit Types:** Integer types come in signed/unsigned and 8/16/32/64-bit widths. There are no `long`/`short`/`unsigned`/`signed` modifiers — just pick the exact type you need (e.g., `uint32`, `int64`, `float64`).
 - **Rich Expressions:** Arithmetic (`+ - * / %`), unary minus and logical not (`!`), comparisons and logical operators (`> < == != && ||`), and a ternary operator (`a > b ? a : b`).
 - **Compound Assignment & Increment:** `+= -= *= /= %=` plus `++` and `--`.
 - **Loop Sugar:** Three-part `for` loops plus a `for (N)` range form that runs the body N times with a hidden counter.
@@ -98,11 +98,11 @@ Even though its under development, the syntax (to some extent) is defined.
 
 ```pinum
 # both of these work
-int a = 5;
-int b = 5
+int32 a = 5;
+int32 b = 5
 
 # semicolons are needed to pack statements on one line
-int c = 1; print(c, "\n"); c = c + 1; print(c, "\n");
+int32 c = 1; print(c, "\n"); c = c + 1; print(c, "\n");
 ```
 
 ### Comments
@@ -120,30 +120,26 @@ int c = 1; print(c, "\n"); c = c + 1; print(c, "\n");
 
 ### Variable declaration
 ```pinum
-# it has keywords like long, short, unsigned and signed
+# integers: signed and unsigned, 8/16/32/64 bits wide
+int32 number = 10
+int64 big = 123456789
+uint32 u = 4000000000
 
-# declares an integer variable
-int number = 10
-# declares a floating point variable
-float num = 3.14
-# declares a double type variable
-double numero = 2.718
-# declares a character variable
+# byte types (8-bit)
+int8 sb = -5
+uint8 ub = 200
+
+# floating point: 32-bit and 64-bit
+float32 num = 3.14
+float64 numero = 2.718
+
+# character, string and boolean
 char letter = 'P'
-# declares a string variable
 string name = "pinum"
-# declares a boolean variable
 bool ready = true
 
-# type modifiers
-unsigned int big = 4000000000
-long int li = 123456789
-short int sh = -30000
-long double ld = 0.123456789
-signed char sc = -5
-
 # compound assignment operators
-int amount = 10
+int32 amount = 10
 amount += 5       # same as amount = amount + 5
 amount -= 3
 amount *= 2
@@ -162,12 +158,12 @@ print("hello ", name, "\n")
 println("count = ", number)
 
 # read stores user input into an existing variable
-int data
+int32 data
 read(data)
 print(data, "\n")
 
 # multiple statements on one line (requires semicolons)
-int n = 2; n = n + 3; print(n, "\n")
+int32 n = 2; n = n + 3; print(n, "\n")
 
 # char repetition: 'c' * n repeats the char n times
 println('=' * 30)
@@ -179,8 +175,8 @@ println("Hello, " + name + "!")
 
 ### Expressions
 ```pinum
-int a = 10
-int b = 3
+int32 a = 10
+int32 b = 3
 
 # arithmetic and unary
 println("a + b = ", a + b)
@@ -193,10 +189,10 @@ println("a > b = ", a > b)
 println("a > b && b > 0 = ", a > b && b > 0)
 
 # ternary
-int max = a > b ? a : b
+int32 max = a > b ? a : b
 
 # expressions in assignment
-int result = (a + b) * 2
+int32 result = (a + b) * 2
 ```
 
 ### Conditions
@@ -224,12 +220,12 @@ while (condition) {
 }
 
 # three-part for loop
-for (int f = 0; f < 5; f++) {
+for (int32 f = 0; f < 5; f++) {
         println("f = ", f)
 }
 
 # counted loop with a step
-for (int step = 0; step < 10; step += 2) {
+for (int32 step = 0; step < 10; step += 2) {
         println("step = ", step)
 }
 
@@ -250,10 +246,10 @@ for (3) {
 ### Vectors
 ```pinum
 # a growable vector, monomorphized per element type
-vec<int> nums = [3, 5, 6]
-vec<float> ratios = [1.5, 2.5]
+vec<int32> nums = [3, 5, 6]
+vec<float32> ratios = [1.5, 2.5]
 vec<string> words = ["PiNum", "rocks"]
-vec<int> empty = []
+vec<int32> empty = []
 
 # methods and properties
 nums.append(7)
@@ -268,7 +264,7 @@ nums[1] = 99
 ```pinum
 # define with: fn name(params): returnType { ... }
 # the ': returnType' part is optional; omit it for a void function.
-fn square(int n): int {
+fn square(int32 n): int32 {
         return n * n
 }
 fn greet() {
@@ -276,7 +272,7 @@ fn greet() {
 }
 
 # recursion
-fn factorial(int n): int {
+fn factorial(int32 n): int32 {
         if (n <= 1) {
                 return 1
         }
@@ -315,7 +311,7 @@ PiNum is currently in its early stages:
 - [x] Lexer / Tokenizer
 - [x] AST
 - [x] Parser
-- [x] Code Generation (print, read, variables, type modifiers, arithmetic, comparisons, logicals, ternary, compound assignment, increment/decrement, if/else, while, for, break, continue, return)
+- [x] Code Generation (print, read, variables, fixed-width integer types, arithmetic, comparisons, logicals, ternary, compound assignment, increment/decrement, if/else, while, for, break, continue, return)
 - [x] Vectors (`vec<T>`) with methods and indexed access
 - [x] Functions (definitions, return types, recursion)
 - [x] Runtime Library (char repetition, string concatenation)

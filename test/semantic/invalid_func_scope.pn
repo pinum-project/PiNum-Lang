@@ -1,4 +1,4 @@
-int inverse(int n) {
+int32 inverse(int32 n) {
         if (n == 0) {
                 return 0
         }
@@ -8,6 +8,6 @@ int inverse(int n) {
 
 fn main() {
 # Semantic invalid: undeclared variable inside a function body
-int x = inverse(2)
+int32 x = inverse(2)
 print(x, "\n")
 }

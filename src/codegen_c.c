@@ -74,21 +74,33 @@ static bool is_string(ASTnode *node) {
 }
 
 static const char *specifier_for_type(const char *type) {
-        if (strcmp(type, "char *") == 0) return "%s";
-        if (strcmp(type, "long double") == 0) return "%Lf";
-        if (strcmp(type, "long int") == 0) return "%ld";
-        if (strcmp(type, "unsigned int") == 0) return "%u";
-        if (strcmp(type, "double") == 0) return "%lf";
-        if (strcmp(type, "float") == 0) return "%f";
+        if (strcmp(type, "char *") == 0) return "%s";            // string
+        if (strcmp(type, "int8") == 0 || strcmp(type, "int16") == 0 ||
+            strcmp(type, "int32") == 0 || strcmp(type, "bool") == 0) return "%d";
+        if (strcmp(type, "uint8") == 0 || strcmp(type, "uint16") == 0 ||
+            strcmp(type, "uint32") == 0) return "%u";
+        if (strcmp(type, "int64") == 0) return "%lld";
+        if (strcmp(type, "uint64") == 0) return "%llu";
+        if (strcmp(type, "float32") == 0 || strcmp(type, "float64") == 0) return "%f";
         if (strcmp(type, "char") == 0) return "%c";
-        return "%d"; // int, bool, and everything else
+        return "%d"; // vec_* use their own print helpers; fallback
 }
 
 // maps a PiNum type name to its C equivalent
 static const char *codegen_type(const char *type_name) {
+        if (strcmp(type_name, "int8") == 0) return "int8_t";
+        if (strcmp(type_name, "int16") == 0) return "int16_t";
+        if (strcmp(type_name, "int32") == 0) return "int32_t";
+        if (strcmp(type_name, "int64") == 0) return "int64_t";
+        if (strcmp(type_name, "uint8") == 0) return "uint8_t";
+        if (strcmp(type_name, "uint16") == 0) return "uint16_t";
+        if (strcmp(type_name, "uint32") == 0) return "uint32_t";
+        if (strcmp(type_name, "uint64") == 0) return "uint64_t";
+        if (strcmp(type_name, "float32") == 0) return "float";
+        if (strcmp(type_name, "float64") == 0) return "double";
         if (strcmp(type_name, "string") == 0) return "char *";
         if (strcmp(type_name, "vec") == 0) return "vec";
-        return type_name; // int, float, double, char, bool map 1:1
+        return type_name; // char, bool, vec_<T> map 1:1
 }
 
 // returns the printf format specifier that matches a node's value type
@@ -127,7 +139,7 @@ static const char *codegen_specifier(ASTnode *node) {
                 // properties like .size / .capacity are size_t
                 return "%zu";
         case NODE_FUNC_CALL:
-                return specifier_for_type(node->resolved_type ? codegen_type(node->resolved_type) : "int");
+                return specifier_for_type(node->resolved_type ? node->resolved_type : "int32");
         default:
                 return "%d";
         }
@@ -137,7 +149,7 @@ static const char *codegen_specifier(ASTnode *node) {
 static const char *codegen_decl_type(ASTnode *node) {
         if (node->data.var_decl.type_name && strcmp(node->data.var_decl.type_name, "vec") == 0) {
                 static char buf[32];
-                snprintf(buf, sizeof(buf), "vec_%s", node->data.var_decl.element_type ? node->data.var_decl.element_type : "int");
+                snprintf(buf, sizeof(buf), "vec_%s", node->data.var_decl.element_type ? node->data.var_decl.element_type : "int32");
                 return buf;
         }
         return codegen_type(node->data.var_decl.type_name);
@@ -238,12 +250,12 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 // each element is cast to the vec's element type so the variadic
                 // init() reads the correct C type (e.g. int literals in a vec<double>
                 // must be passed as double, not int — otherwise va_arg misreads them).
-                const char *vec_type = node->resolved_type ? node->resolved_type : "vec_int";
+                const char *vec_type = node->resolved_type ? node->resolved_type : "vec_int32";
                 const char *elem = vec_type;
                 if (strncmp(vec_type, "vec_", 4) == 0) {
                         elem = codegen_type(vec_type + 4);
                 } else {
-                        elem = "int";
+                        elem = "int32";
                 }
                 fprintf(output, "__pinum_%s_init(%d", vec_type, node->data.list_literal.count);
                 for (int i = 0; i < node->data.list_literal.count; i++) {

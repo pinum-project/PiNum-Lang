@@ -75,14 +75,14 @@ static const char *sem_resolve(SemAnalyzer *a, const char *name) {
         }
         return NULL;
 }
-// full C type for a symbol, e.g. "long int", "char *", "vec", "vec_int"
+// full C type for a symbol, e.g. "char *", "vec", "vec_int32"
 static char *sem_fulltype(const char *type_name, const char *modifiers, const char *element_type) {
         char *base;
         if (strcmp(type_name, "string") == 0) base = strdup("char *");
         else if (strcmp(type_name, "vec") == 0) {
                 // monomorphize vec<T> → vec_T
                 char buf[32];
-                snprintf(buf, sizeof(buf), "vec_%s", element_type ? element_type : "int");
+                snprintf(buf, sizeof(buf), "vec_%s", element_type ? element_type : "int32");
                 base = strdup(buf);
         } else base = strdup(type_name);
         if (modifiers == NULL) {
@@ -185,7 +185,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                         sem_analyze_node(a, node->data.member_access.args[i]);
                 }
                 // scalar for now (method calls return void; property reads are numeric)
-                node->resolved_type = strdup("int");
+                node->resolved_type = strdup("int32");
                 break;
         }
 

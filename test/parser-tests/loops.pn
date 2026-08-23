@@ -1,6 +1,6 @@
 fn main() {
 # Parser: loops
-int count = 0;
+int32 count = 0;
 while (count < 5) {
         count = count + 1;
         if (count == 3) {
@@ -9,7 +9,7 @@ while (count < 5) {
         print(count, "\n");
 }
 
-int running = 1;
+int32 running = 1;
 while (running == 1) {
         count = count - 1;
         if (count == 1) {

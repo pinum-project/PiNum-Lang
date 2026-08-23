@@ -1,10 +1,10 @@
-fn square(int n) : int {
+fn square(int32 n) : int32 {
         return n * n
 }
 fn greet() {
         println("Hello from a function!")
 }
-fn factorial(int n) : int {
+fn factorial(int32 n) : int32 {
         if (n <= 1) {
                 return 1
         }
@@ -17,12 +17,12 @@ fn main() {
 
 # Semicolons are OPTIONAL — a newline ends a statement.
 # But they ARE required to put multiple statements on one line:
-#   int x = 1; print(x, "\n");   # two statements, one line
+#   int32 x = 1; print(x, "\n");   # two statements, one line
 
 # --- variables and data types ---
-int count = 10;
-float ratio = 2.5
-double pi = 3.14159
+int32 count = 10;
+float32 ratio = 2.5
+float64 pi = 3.14159
 char letter = 'P'
 string name = "PiNum"
 bool ready = true
@@ -34,19 +34,19 @@ println("name   = ", name)
 println("ready  = ", ready)
 
 # multiple statements on one line (needs semicolons)
-int x = 5; println("x = ", x); x = x * 2; println("x*2 = ", x)
+int32 x = 5; println("x = ", x); x = x * 2; println("x*2 = ", x)
 
-# --- type modifiers: long, short, unsigned, signed, long double ---
-unsigned int big = 4000000000
-long int li = 123456789
-short int sh = -30000
-long double ld = 0.123456789
-signed char sc = -5
+# --- type modifiers: int64, int16, uint32, int32, float64 ---
+uint32 big = 4000000000
+int64 li = 123456789
+int16 sh = -30000
+float64 ld = 0.123456789
+int8 sc = -5
 println("big = ", big, "  li = ", li, "  sh = ", sh, "  ld = ", ld, "  sc = ", sc)
 
 # --- arithmetic ---
-int a = 10
-int b = 3
+int32 a = 10
+int32 b = 3
 println("a + b = ", a + b)
 println("a - b = ", a - b)
 println("a * b = ", a * b)
@@ -54,7 +54,7 @@ println("a / b = ", a / b)
 println("a % b = ", a % b)
 
 # --- unary minus and logical not ---
-int neg = -a
+int32 neg = -a
 bool flag = false
 println("neg = ", neg, "  !flag = ", !flag)
 
@@ -68,7 +68,7 @@ println(4 * '-')
 println('#' * (a - b))
 
 # building a pyramid, one line per row
-int row = 0
+int32 row = 0
 while (row < 5) {
         println('*' * (row * 2 + 1))
         row = row + 1
@@ -90,18 +90,18 @@ println("a < b || b==3= ", a < b || b == 3)
 println("!flag        = ", !flag)
 
 # --- ternary ---
-int max = a > b ? a : b
+int32 max = a > b ? a : b
 println("max = ", max)
 
 # --- expressions in assignment ---
-int c = 4
-int result = (a + b) * 2
+int32 c = 4
+int32 result = (a + b) * 2
 println("result = ", result)
 result = a + b * c
 println("result = ", result)
 
 # --- compound assignment operators ---
-int amount = 10
+int32 amount = 10
 amount += 5       # same as amount = amount + 5
 println("after += 5  = ", amount)
 amount -= 3
@@ -136,14 +136,14 @@ if (a > 0) {
 }
 
 # --- while loop ---
-int i = 0
+int32 i = 0
 while (i < 5) {
         println("while i = ", i)
         i = i + 1
 }
 
 # --- break and continue ---
-int j = 0
+int32 j = 0
 while (j < 10) {
         j = j + 1
         if (j % 2 == 0) {
@@ -156,29 +156,29 @@ while (j < 10) {
 }
 
 # --- for loop (three-part) ---
-for (int f = 0; f < 5; f++) {
+for (int32 f = 0; f < 5; f++) {
         println("for f = ", f)
 }
 
 # counted loop with a step
-for (int step = 0; step < 10; step += 2) {
+for (int32 step = 0; step < 10; step += 2) {
         println("step = ", step)
 }
 
 # counting down
-for (int down = 5; down > 0; down--) {
+for (int32 down = 5; down > 0; down--) {
         println("down = ", down)
 }
 
 # --- for (range) sugar ---
 # for (N) runs the body N times: expands to
-#   for (int __pinum_i0 = 0; __pinum_i0 < N; __pinum_i0++)
+#   for (int32 __pinum_i0 = 0; __pinum_i0 < N; __pinum_i0++)
 for (5) {
         println("beep")
 }
 
 # the range is any expression, evaluated each iteration
-int sides = 3
+int32 sides = 3
 for (sides) {
         println("side")
 }
@@ -192,13 +192,13 @@ for (3) {
 }
 
 # --- vec<T> — a growable vector, monomorphized per element type ---
-vec<int> nums = [3, 5, 6]
+vec<int32> nums = [3, 5, 6]
 println("nums = ", nums)
-vec<float> ratios = [1.5, 2.5]
+vec<float32> ratios = [1.5, 2.5]
 println("ratios = ", ratios)
 vec<string> words = ["PiNum", "rocks"]
 println("words = ", words)
-vec<int> empty = []
+vec<int32> empty = []
 println("empty = ", empty)
 
 # --- vec method calls and property reads ---
@@ -216,19 +216,19 @@ println("nums[1] now = ", nums[1])
 # the ': returnType' part is optional; omit it for a void function.
 # recursion
 
-int s = square(9)
+int32 s = square(9)
 println("square(9) = ", s)
 greet()
 println("5! = ", factorial(5))
 
 # --- read user input ---
-int data
+int32 data
 println("Enter a number: ")
 read(data)
 println("you entered ", data)
 
 # --- return (exits main early) ---
-int m = 0
+int32 m = 0
 while (m < 10) {
         println("m = ", m)
         if (m == 3) {

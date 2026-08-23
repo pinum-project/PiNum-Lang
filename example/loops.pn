@@ -1,17 +1,17 @@
 fn main() {
 # Semicolons are optional — a newline ends a statement.
 # They ARE required to put multiple statements on one line:
-#   int x = 1; print(x, "\n");   # two statements, one line
+#   int32 x = 1; print(x, "\n");   # two statements, one line
 
 # while loop: count up
-int i = 0;
+int32 i = 0;
 while (i < 5) {
         print(i, "\n")
         i = i + 1
 }
 
 # continue: skip even numbers
-int j = 0
+int32 j = 0
 while (j < 10) {
         j = j + 1
         if (j % 2 == 0) {
@@ -21,7 +21,7 @@ while (j < 10) {
 }
 
 # break: stop the loop early
-int k = 0
+int32 k = 0
 while (k < 100) {
         k = k + 1
         if (k == 3) {
@@ -32,33 +32,33 @@ while (k < 100) {
 
 # for loop: for (init; condition; increment) { body }
 # the classic counter loop
-for (int i = 0; i < 5; i = i + 1) {
+for (int32 i = 0; i < 5; i = i + 1) {
         print(i, "\n")
 }
 
 # shorter with the ++ operator
-for (int i = 0; i < 5; i++) {
+for (int32 i = 0; i < 5; i++) {
         print(i, "\n")
 }
 
 # init can assign to a variable declared outside the loop
-int jj = 0
+int32 jj = 0
 for (jj = 3; jj < 7; jj++) {
         print(jj, "\n")
 }
 
 # stepping by more than one with +=
-for (int k = 0; k < 10; k += 2) {
+for (int32 k = 0; k < 10; k += 2) {
         print(k, "\n")
 }
 
 # counting down with --
-for (int n = 5; n > 0; n--) {
+for (int32 n = 5; n > 0; n--) {
         print(n, "\n")
 }
 
 # empty parts: for(;;) is an infinite loop
-int cnt = 0
+int32 cnt = 0
 for (;;) {
         cnt = cnt + 1
         if (cnt == 3) {
@@ -68,7 +68,7 @@ for (;;) {
 }
 
 # continue skips the rest of the current iteration
-for (int p = 0; p < 6; p++) {
+for (int32 p = 0; p < 6; p++) {
         if (p % 2 == 0) {
                 continue
         }
@@ -76,14 +76,14 @@ for (int p = 0; p < 6; p++) {
 }
 
 # nested for loops
-for (int x = 0; x < 3; x++) {
-        for (int y = 0; y < 2; y++) {
+for (int32 x = 0; x < 3; x++) {
+        for (int32 y = 0; y < 2; y++) {
                 print(x * y, "\n")
         }
 }
 
 # return: exit the loop and the program
-int m = 0
+int32 m = 0
 while (m < 10) {
         print(m, "\n")
         if (m == 2) {

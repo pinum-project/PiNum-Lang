@@ -92,9 +92,16 @@ static inline void __pinum_panic_bounds(size_t len, long long idx) {
         }
 
 /* ---------- CONCRETE VECS ---------- */
-PINUM_VEC_DEFINE(int, int, int *, int, "%d")
-PINUM_VEC_DEFINE(float, float, float *, double, "%f")
-PINUM_VEC_DEFINE(double, double, double *, double, "%lf")
+PINUM_VEC_DEFINE(int8, int8_t, int8_t *, int, "%d")
+PINUM_VEC_DEFINE(int16, int16_t, int16_t *, int, "%d")
+PINUM_VEC_DEFINE(int32, int32_t, int32_t *, int, "%d")
+PINUM_VEC_DEFINE(int64, int64_t, int64_t *, long long, "%lld")
+PINUM_VEC_DEFINE(uint8, uint8_t, uint8_t *, int, "%u")
+PINUM_VEC_DEFINE(uint16, uint16_t, uint16_t *, int, "%u")
+PINUM_VEC_DEFINE(uint32, uint32_t, uint32_t *, unsigned int, "%u")
+PINUM_VEC_DEFINE(uint64, uint64_t, uint64_t *, unsigned long long, "%llu")
+PINUM_VEC_DEFINE(float32, float, float *, double, "%f")
+PINUM_VEC_DEFINE(float64, double, double *, double, "%f")
 PINUM_VEC_DEFINE(char, char, char *, int, "%c")
 PINUM_VEC_DEFINE(bool, int, int *, int, "%d")
 PINUM_VEC_DEFINE(string, char *, char **, char *, "%s")

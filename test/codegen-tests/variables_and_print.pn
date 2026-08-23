@@ -1,8 +1,8 @@
 fn main() {
 # Codegen: variables and print
-int count = 10;
-float ratio = 3.5;
-double pi = 3.14159;
+int32 count = 10;
+float32 ratio = 3.5;
+float64 pi = 3.14159;
 char letter = 'A';
 string name = "pinum";
 bool done = true;

@@ -1,6 +1,6 @@
 fn main() {
 # Semantic invalid: read() into an undeclared variable
-int a = 1
+int32 a = 1
 read(a)
 read(missing)
 print(a, "\n")

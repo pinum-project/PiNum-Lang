@@ -1,15 +1,15 @@
 fn main() {
 # Codegen: arithmetic and expressions
-int a = 10;
-int b = 3;
-int c = 4;
+int32 a = 10;
+int32 b = 3;
+int32 c = 4;
 print(a + b, "\n");
 print(a - b, "\n");
 print(a * b, "\n");
 print(a / b, "\n");
 print(a % b, "\n");
 print((a + b) * c, "\n");
-int max = a > b ? a : b;
+int32 max = a > b ? a : b;
 print(max, "\n");
 
 }

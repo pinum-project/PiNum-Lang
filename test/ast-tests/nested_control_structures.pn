@@ -1,7 +1,7 @@
 fn main() {
 # AST: nested control structures
-int outer = 5;
-int inner = 3;
+int32 outer = 5;
+int32 inner = 3;
 if (outer > 0) {
         while (inner > 0) {
                 if (inner == 1) {

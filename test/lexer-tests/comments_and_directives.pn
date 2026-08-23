@@ -3,10 +3,10 @@
 fn main() {
 # Lexer: comments and directives
 # this is a single line comment
-int a = 10;
+int32 a = 10;
 
 # comment between statements
-int b = 20;
+int32 b = 20;
 print(a + b, "\n");
 
 }

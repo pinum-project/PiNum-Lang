@@ -24,7 +24,7 @@
 #ifndef PINUM_VERSION_H
 #define PINUM_VERSION_H
 
-#define PINUM_VERSION "1.3.2"
+#define PINUM_VERSION "1.3.3"
 // update 0.3.5 added semicolon after every expression like javascript and C.
 // update 0.6.0 supports other compilers too.
 // update 0.8.0 chnaged the compiler pipeline from line by line parsing to token stream paring.

@@ -1,11 +1,11 @@
 fn main() {
 # AST: expressions and precedence
-int a = 10;
-int b = 3;
-int c = 4;
-int result = (a + b) * (c - 2) / (a % b);
+int32 a = 10;
+int32 b = 3;
+int32 c = 4;
+int32 result = (a + b) * (c - 2) / (a % b);
 print(result, "\n");
-int max = a > b ? a : b;
+int32 max = a > b ? a : b;
 print(max, "\n");
 bool check = (a > b && b < c) || !(a == b);
 print(check, "\n");

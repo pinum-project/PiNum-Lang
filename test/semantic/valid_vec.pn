@@ -1,10 +1,10 @@
 fn main() {
 # Semantic valid: vec<T> declarations and printing resolve correctly
-vec<int> nums = [3, 5, 6]
+vec<int32> nums = [3, 5, 6]
 print(nums, "\n")
 vec<string> words = ["PiNum", "rocks"]
 print(words, "\n")
-vec<int> other = [1, 2]
+vec<int32> other = [1, 2]
 print(other, "\n")
 
 }

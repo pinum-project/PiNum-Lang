@@ -1,11 +1,11 @@
 fn main() {
-# Codegen: for (RANGE) sugar  →  for (int __pinum_iN = 0; __pinum_iN < RANGE; __pinum_iN++)
+# Codegen: for (RANGE) sugar  →  for (int32 __pinum_iN = 0; __pinum_iN < RANGE; __pinum_iN++)
 # 1. all four for-loop forms still compile
 for (5) {
     print("R");
 }
 print("\n");
-int j = 0;
+int32 j = 0;
 for (j = 0; j < 3; j = j + 1) {
     print("E");
 }
@@ -14,13 +14,13 @@ for (; j < 6; j = j + 1) {
     print("S");
 }
 print("\n");
-for (int i = 0; i < 3; i = i + 1) {
+for (int32 i = 0; i < 3; i = i + 1) {
     print("C");
 }
 print("\n");
 
 # 2. range is an expression, re-evaluated each iteration
-int rows = 3;
+int32 rows = 3;
 for (rows) {
     print("X");
 }
@@ -35,7 +35,7 @@ for (3) {
 }
 
 # 4. range loops nested inside a classic loop
-for (int k = 0; k < 2; k = k + 1) {
+for (int32 k = 0; k < 2; k = k + 1) {
     for (2) {
         print("#");
     }

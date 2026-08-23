@@ -1,11 +1,11 @@
 fn main() {
 # Codegen: return and read
-int i = 0;
+int32 i = 0;
 while (i < 5) {
         print(i, "\n");
         i = i + 1;
 }
-int data;
+int32 data;
 read(data);
 print(data, "\n");
 if (data > 0) {

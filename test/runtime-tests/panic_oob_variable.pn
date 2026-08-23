@@ -1,7 +1,7 @@
 fn main() {
 # Runtime: variable index out of bounds must panic
-vec<int> nums = [10, 20];
+vec<int32> nums = [10, 20];
 nums.append(30);
-int i = 3;
+int32 i = 3;
 print(nums[i], "\n");
 }

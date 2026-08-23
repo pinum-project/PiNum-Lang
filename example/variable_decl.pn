@@ -1,12 +1,12 @@
 fn main() {
 # Semicolons are optional — a newline ends a statement.
 # They ARE required to put multiple statements on one line:
-#   int x = 1; print(x, "\n");   # two statements, one line
+#   int32 x = 1; print(x, "\n");   # two statements, one line
 
 # all basic data types, with a value
-int count = 10;
-float ratio = 3.5
-double pi = 3.14159
+int32 count = 10;
+float32 ratio = 3.5
+float64 pi = 3.14159
 char letter = 'A'
 string name = "pinum"
 bool done = true
@@ -18,9 +18,9 @@ print(name, "\n")
 print(done, "\n")
 
 # all basic data types, declared without a value and assigned later
-int a
-float b
-double c
+int32 a
+float32 b
+float64 c
 char d
 string e
 bool f
@@ -37,30 +37,30 @@ print(d, "\n")
 print(e, "\n")
 print(f, "\n")
 
-# modifiers: unsigned/signed with int and char
-unsigned int u = 2147483647
-unsigned char uc = 65
-signed int si = -5
-signed char sc = -128
+# byte types: uint8 and int8
+uint32 u = 2147483647
+uint8 uc = 65
+int32 si = -5
+int8 sc = -128
 print(u, "\n")
 print(uc, "\n")
 print(si, "\n")
 print(sc, "\n")
 
-# modifiers: long with int and double, short with int
-long int li = 123456789
-long double ld = 0.123456789
-short int sh = -32768
+# modifiers: int64 with int32 and float64, int16 with int32
+int64 li = 123456789
+float64 ld = 0.123456789
+int16 sh = -32768
 print(li, "\n")
 print(ld, "\n")
 print(sh, "\n")
 
 # read from the user
-int number
-float ratio2
-print('Enter an int: ')
+int32 number
+float32 ratio2
+print('Enter an int32: ')
 read(number)
-print('Enter a float: ')
+print('Enter a float32: ')
 read(ratio2)
 print(number, "\n")
 print(ratio2, "\n")

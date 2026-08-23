@@ -55,12 +55,13 @@ ASTnode *parse_program(Parser *parser) {
 }
 // - statement level parsing -
 ASTnode *parse_statement(Parser *parser) {
-        if (check(parser, TOKEN_INT) || check(parser, TOKEN_FLOAT) ||
-            check(parser, TOKEN_DOUBLE) || check(parser, TOKEN_CHAR) ||
-            check(parser, TOKEN_STRING) || check(parser, TOKEN_BOOL) ||
-            check(parser, TOKEN_VEC) ||
-            check(parser, TOKEN_UNSIGNED) || check(parser, TOKEN_SIGNED) ||
-            check(parser, TOKEN_LONG) || check(parser, TOKEN_SHORT)) {
+        if (check(parser, TOKEN_INT8) || check(parser, TOKEN_INT16) ||
+            check(parser, TOKEN_INT32) || check(parser, TOKEN_INT64) ||
+            check(parser, TOKEN_UINT8) || check(parser, TOKEN_UINT16) ||
+            check(parser, TOKEN_UINT32) || check(parser, TOKEN_UINT64) ||
+            check(parser, TOKEN_FLOAT32) || check(parser, TOKEN_FLOAT64) ||
+            check(parser, TOKEN_CHAR) || check(parser, TOKEN_STRING) ||
+            check(parser, TOKEN_BOOL) || check(parser, TOKEN_VEC)) {
                 return parse_declaration(parser);
         }
         if (match(parser, TOKEN_PRINT)) {
@@ -192,8 +193,13 @@ ASTnode *parse_for_statement(Parser *parser) {
         // init
         ASTnode *init = NULL;
         // for (int i = 0; i < n; i++) {body}
-        if (check(parser, TOKEN_INT) || check(parser, TOKEN_FLOAT) ||
-            check(parser, TOKEN_DOUBLE) || check(parser, TOKEN_VEC)) {
+        if (check(parser, TOKEN_INT8) || check(parser, TOKEN_INT16) ||
+            check(parser, TOKEN_INT32) || check(parser, TOKEN_INT64) ||
+            check(parser, TOKEN_UINT8) || check(parser, TOKEN_UINT16) ||
+            check(parser, TOKEN_UINT32) || check(parser, TOKEN_UINT64) ||
+            check(parser, TOKEN_FLOAT32) || check(parser, TOKEN_FLOAT64) ||
+            check(parser, TOKEN_CHAR) || check(parser, TOKEN_STRING) ||
+            check(parser, TOKEN_BOOL) || check(parser, TOKEN_VEC)) {
                 init = parse_declaration(parser);
         } else if (check(parser, TOKEN_SEMICOLON)) {
                 advance(parser); // skip empty init ';'
@@ -255,43 +261,21 @@ ASTnode *parse_read_statement(Parser *parser) {
         ast_set_loc(node, name_token.line, name_token.col);
         return node;
 }
-// verifies veriable modifier
-static bool is_valid_modifier(const char *modifier, const char *data_type) {
-        if (modifier == NULL) return true;
-        if (strcmp(modifier, "unsigned") == 0 || strcmp(modifier, "signed") == 0)
-                return strcmp(data_type, "int") == 0 || strcmp(data_type, "char") == 0;
-        if (strcmp(modifier, "long") == 0)
-                return strcmp(data_type, "int") == 0 || strcmp(data_type, "double") == 0;
-        if (strcmp(modifier, "short") == 0)
-                return strcmp(data_type, "int") == 0;
-        return false;
-}
-
-// parse a type: simple (int, float, etc.) or generic (vec<int>)
-static void parse_type(Parser *parser, char **out_modifier, char **out_type_name, char **out_element_type) {
-        *out_modifier = NULL;
+// parse a type: simple (int32, uint8, etc.) or generic (vec<int32>)
+static void parse_type(Parser *parser, char **out_type_name, char **out_element_type) {
         *out_type_name = NULL;
         *out_element_type = NULL;
 
-        // optional modifier (short / long / unsigned / signed)
-        token modifier_tok = {0};
-        if (match(parser, TOKEN_UNSIGNED)) {
-                *out_modifier = "unsigned";
-                modifier_tok = parser->tokens->tokens[parser->current - 1];
-        } else if (match(parser, TOKEN_SIGNED)) {
-                *out_modifier = "signed";
-                modifier_tok = parser->tokens->tokens[parser->current - 1];
-        } else if (match(parser, TOKEN_LONG)) {
-                *out_modifier = "long";
-                modifier_tok = parser->tokens->tokens[parser->current - 1];
-        } else if (match(parser, TOKEN_SHORT)) {
-                *out_modifier = "short";
-                modifier_tok = parser->tokens->tokens[parser->current - 1];
-        }
-
-        if (match(parser, TOKEN_INT)) *out_type_name = "int";
-        else if (match(parser, TOKEN_FLOAT)) *out_type_name = "float";
-        else if (match(parser, TOKEN_DOUBLE)) *out_type_name = "double";
+        if (match(parser, TOKEN_INT8)) *out_type_name = "int8";
+        else if (match(parser, TOKEN_INT16)) *out_type_name = "int16";
+        else if (match(parser, TOKEN_INT32)) *out_type_name = "int32";
+        else if (match(parser, TOKEN_INT64)) *out_type_name = "int64";
+        else if (match(parser, TOKEN_UINT8)) *out_type_name = "uint8";
+        else if (match(parser, TOKEN_UINT16)) *out_type_name = "uint16";
+        else if (match(parser, TOKEN_UINT32)) *out_type_name = "uint32";
+        else if (match(parser, TOKEN_UINT64)) *out_type_name = "uint64";
+        else if (match(parser, TOKEN_FLOAT32)) *out_type_name = "float32";
+        else if (match(parser, TOKEN_FLOAT64)) *out_type_name = "float64";
         else if (match(parser, TOKEN_CHAR)) *out_type_name = "char";
         else if (match(parser, TOKEN_STRING)) *out_type_name = "string";
         else if (match(parser, TOKEN_BOOL)) *out_type_name = "bool";
@@ -299,34 +283,35 @@ static void parse_type(Parser *parser, char **out_modifier, char **out_type_name
                 *out_type_name = "vec";
                 consume(parser, TOKEN_LABRACKET, "'<' after vec");
                 // parse element type
-                if (match(parser, TOKEN_INT)) *out_element_type = "int";
-                else if (match(parser, TOKEN_FLOAT)) *out_element_type = "float";
-                else if (match(parser, TOKEN_DOUBLE)) *out_element_type = "double";
+                if (match(parser, TOKEN_INT8)) *out_element_type = "int8";
+                else if (match(parser, TOKEN_INT16)) *out_element_type = "int16";
+                else if (match(parser, TOKEN_INT32)) *out_element_type = "int32";
+                else if (match(parser, TOKEN_INT64)) *out_element_type = "int64";
+                else if (match(parser, TOKEN_UINT8)) *out_element_type = "uint8";
+                else if (match(parser, TOKEN_UINT16)) *out_element_type = "uint16";
+                else if (match(parser, TOKEN_UINT32)) *out_element_type = "uint32";
+                else if (match(parser, TOKEN_UINT64)) *out_element_type = "uint64";
+                else if (match(parser, TOKEN_FLOAT32)) *out_element_type = "float32";
+                else if (match(parser, TOKEN_FLOAT64)) *out_element_type = "float64";
                 else if (match(parser, TOKEN_CHAR)) *out_element_type = "char";
                 else if (match(parser, TOKEN_STRING)) *out_element_type = "string";
                 else if (match(parser, TOKEN_BOOL)) *out_element_type = "bool";
                 else {
                         token found = peek(parser);
-                        pinum_expected_at(STAGE_PARSER, found.line, found.col, "element type (int, float, etc.)", peek_display(parser));
+                        pinum_expected_at(STAGE_PARSER, found.line, found.col, "element type (int32, float64, etc.)", peek_display(parser));
                 }
                 consume(parser, TOKEN_RABRACKET, "'>' after element type");
         } else {
                 token found = peek(parser);
-                pinum_expected_at(STAGE_PARSER, found.line, found.col, "a data type (int, float, vec<int>, etc.)", peek_display(parser));
-        }
-
-        // validate the modifier/base combination (e.g. reject "long float")
-        if (*out_modifier && !is_valid_modifier(*out_modifier, *out_type_name)) {
-                pinum_error_at(STAGE_PARSER, ERR_INVALID_MODIFIER, modifier_tok.line, modifier_tok.col, *out_modifier);
+                pinum_expected_at(STAGE_PARSER, found.line, found.col, "a data type (int32, float64, vec<int32>, etc.)", peek_display(parser));
         }
 }
 ASTnode *parse_declaration(Parser *parser) {
-        char *modifier = NULL;
         char *data_type = NULL;
         char *element_type = NULL;
 
-        // Data Type (Required) - supports modifiers and generic types like vec<int>
-        parse_type(parser, &modifier, &data_type, &element_type);
+        // Data Type (Required) - supports types like int32, uint8, vec<int32>
+        parse_type(parser, &data_type, &element_type);
 
         // Veriable name
         token name_token = consume(parser, TOKEN_ID, "a variable name");
@@ -339,7 +324,7 @@ ASTnode *parse_declaration(Parser *parser) {
         // expecting for a semicolon at the end
         consume_end_of_statement(parser);
 
-        ASTnode *decl = make_var_decl_node(data_type, modifier, var_name, initializer, false, 0);
+        ASTnode *decl = make_var_decl_node(data_type, NULL, var_name, initializer, false, 0);
         if (element_type) {
                 decl->data.var_decl.element_type = strdup(element_type);
         }
@@ -361,13 +346,12 @@ ASTnode *parse_block(Parser *parser) {
 
 // - Function parsing -
 ASTnode *parse_func_def_param(Parser *parser) {
-        char *modifier = NULL;
         char *type_name = NULL;
         char *element_type = NULL;
-        parse_type(parser, &modifier, &type_name, &element_type);
+        parse_type(parser, &type_name, &element_type);
 
         token name_token = consume(parser, TOKEN_ID, "a parameter name");
-        ASTnode *param = make_var_decl_node(type_name, modifier, name_token.value, NULL, false, 0);
+        ASTnode *param = make_var_decl_node(type_name, NULL, name_token.value, NULL, false, 0);
         if (element_type) {
                 param->data.var_decl.element_type = strdup(element_type);
         }
@@ -395,22 +379,17 @@ ASTnode *parse_func_def(Parser *parser) {
 
         char *return_type = NULL;
         char *ret_element = NULL;
-        char *ret_modifier = NULL;
-        char *ret_storage = NULL; // owns the combined / vec_<T> return-type string
+        char *ret_storage = NULL;
         // optional ':' return type; omitting it means void
         if (check(parser, TOKEN_COLON)) {
                 advance(parser); // consume ':'
-                parse_type(parser, &ret_modifier, &return_type, &ret_element);
+                parse_type(parser, &return_type, &ret_element);
         } else {
                 return_type = "void";
         }
 
-        // build the final return type: modifier + base (e.g. "long int"), or vec<T> → vec_T
-        if (ret_modifier) {
-                ret_storage = malloc(strlen(ret_modifier) + strlen(return_type) + 2);
-                sprintf(ret_storage, "%s %s", ret_modifier, return_type);
-                return_type = ret_storage;
-        } else if (strcmp(return_type, "vec") == 0 && ret_element) {
+        // resolve vec<T> → vec_T for the return type (mirrors codegen_decl_type)
+        if (strcmp(return_type, "vec") == 0 && ret_element) {
                 ret_storage = malloc(strlen("vec_") + strlen(ret_element) + 1);
                 sprintf(ret_storage, "vec_%s", ret_element);
                 return_type = ret_storage;

@@ -1,20 +1,20 @@
 fn main() {
 # Semicolons are optional — a newline ends a statement.
 # They ARE required to put multiple statements on one line:
-#   int x = 1; print(x, "\n");   # two statements, one line
+#   int32 x = 1; print(x, "\n");   # two statements, one line
 
 # self-assignment operators: ++ --  and compound assigns: += -= *= /= %=
 # they lower to plain `x = x op y` assignments in the transpiled C
 
 # increment and decrement
-int i = 0
+int32 i = 0
 i++
 print(i, "\n") # 1
 i--
 print(i, "\n") # 0
 
 # compound assignment
-int a = 10
+int32 a = 10
 a += 5
 print(a, "\n") # 15
 a -= 3
@@ -27,18 +27,18 @@ a %= 4
 print(a, "\n") # 2
 
 # they are shortcuts for `x = x op y`
-int b = 10
+int32 b = 10
 b = b + 5 # same as b += 5
 print(b, "\n")
 b += 5 # same as b = b + 5
 print(b, "\n")
 
 # ++ and += are handy inside for loops
-for (int i = 0; i < 5; i++) {
+for (int32 i = 0; i < 5; i++) {
         print(i, "\n")
 }
-int acc = 0
-for (int k = 1; k <= 5; k++) {
+int32 acc = 0
+for (int32 k = 1; k <= 5; k++) {
         acc += k
 }
 print(acc, "\n") # 15

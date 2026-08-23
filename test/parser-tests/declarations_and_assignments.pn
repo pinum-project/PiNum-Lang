@@ -1,9 +1,9 @@
 fn main() {
 # Parser: declarations and assignments
-int a;
-int b = 10;
+int32 a;
+int32 b = 10;
 string name = "PiNum";
-float pi = 3.14;
+float32 pi = 3.14;
 
 a = b + 5;
 b = a * 2;
