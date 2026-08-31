@@ -1,5 +1,5 @@
-<p align="left">
-  <img src="extras/assets/quil_more_text.png" alt="Quil Logo" width="200" />
+<p align="center">
+  <img src="extras/assets/quil_banner_gradient.png" alt="Quil Banner" width="100%" />
 </p>
 
 # quil 1.3.3-beta
