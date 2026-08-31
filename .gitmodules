@@ -1,6 +1,6 @@
 [submodule "extras/vscode"]
 	path = extras/vscode
-	url = https://github.com/pinum-project/pinum-vscode.git
-[submodule "pncb"]
-	path = pncb
-	url = https://github.com/pinum-project/pncb.git
+	url = https://github.com/quil-project/quil-vscode.git
+[submodule "feather"]
+	path = feather
+	url = https://github.com/quil-project/feather.git

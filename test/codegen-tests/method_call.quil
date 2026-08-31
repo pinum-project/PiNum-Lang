@@ -1,5 +1,5 @@
 fn main() {
-# Codegen: method calls — obj.append(x)  →  __pinum_vec_<t>_append(&obj, x)
+# Codegen: method calls — obj.append(x)  →  __quil_vec_<t>_append(&obj, x)
 vec<int32> nums = [1, 2];
 nums.append(3);
 nums.append(4);

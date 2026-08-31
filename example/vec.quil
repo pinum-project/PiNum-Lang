@@ -20,7 +20,7 @@ vec<char> letters = ['a', 'b', 'c']
 print(letters, "\n")
 vec<bool> flags = [true, false, true]
 print(flags, "\n")
-vec<string> words = ["PiNum", "rocks"]
+vec<string> words = ["Quil", "rocks"]
 print(words, "\n")
 
 # --- mixing vecs with scalars in one print ---
@@ -31,10 +31,10 @@ vec<int32> empty = []
 print(empty, "\n")
 
 # --- runtime helpers also expose append (wired when methods land) ---
-# (generated C: __pinum_vec_int_append(&nums, 7))
+# (generated C: __quil_vec_int_append(&nums, 7))
 
 # --- method calls: obj.append(x) ---
-# appends an element to the vector (expands to __pinum_vec_<t>_append)
+# appends an element to the vector (expands to __quil_vec_<t>_append)
 nums.append(7)
 nums.append(8)
 print(nums, "\n")

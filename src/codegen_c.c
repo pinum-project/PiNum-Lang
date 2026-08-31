@@ -1,25 +1,12 @@
-/********************************************************************
- *   _____ _ _   _                       _                          *
- *  |  __ (_) \ | |                     | |                         *
- *  | |__) ||  \| |_   _ _ __ ___ ______| |     __ _ _ __   __ _    *
- *  |  ___/ | . ` | | | | '_ ` _ \______| |    / _` | '_ \ / _` |   *
- *  | |   | | |\  | |_| | | | | | |     | |___| (_| | | | | (_| |   *
- *  |_|   | |_| \_|\__,_|_| |_| |_|     |______\__,_|_| |_|\__, |   *
- *                                                          __/ |   *
- *                                                         |___/    *
- *                                                                  *
- *  Copyright (c) 2026 tanvir-techbro.                              *
- *  You may opt to use, copy, modify, merge, publish, distribute    *
- *  and/or sell copies of the Software, and permit persons to whom  *
- *  the Software is furnished to do so, under the conditions of the *
- *  LICENSE.                                                        *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, *
- *  EXPRESS OR IMPLIED.                                             *
- *                                                                  *
- *  If you find any bug you would be highly encouraged to create a  *
- *  github issue at <https://github.com/pinum-project/PiNum-Lang>   *
- *  or contact <surjointelligence.team@gmail.com>                   *
- ********************************************************************/
+/**************************************************
+ * QUIL - Quick Unified Iterative Language
+ * Language and Compiler toolchain, Frontend
+ *
+ * Copyright (c) 2026-present quil-project authors.
+ * Licensed under the terms of the LICENSE file.
+ *
+ * Issues: <https://github.com/quil-project/quil>
+ *************************************************/
 
 /* C code generation backend */
 
@@ -86,7 +73,7 @@ static const char *specifier_for_type(const char *type) {
         return "%d"; // vec_* use their own print helpers; fallback
 }
 
-// maps a PiNum type name to its C equivalent
+// maps a Quil type name to its C equivalent
 static const char *codegen_type(const char *type_name) {
         if (strcmp(type_name, "int8") == 0) return "int8_t";
         if (strcmp(type_name, "int16") == 0) return "int16_t";
@@ -161,7 +148,7 @@ static bool is_vec(ASTnode *node) {
         return t && strncmp(t, "vec_", 4) == 0;
 }
 
-// maps a PiNum operator token to its C equivalent
+// maps a Quil operator token to its C equivalent
 static const char *codegen_operator(tokenType op) {
         switch (op) {
         case TOKEN_PLUS: return "+";
@@ -212,7 +199,7 @@ static void codegen_for_param(ASTnode *node, FILE *output, int level) {
         }
         case NODE_ASSIGN:
                 if (node->data.assign.index) {
-                        fprintf(output, "%s.data[__pinum_check_bounds(%s.size, ", node->data.assign.name, node->data.assign.name);
+                        fprintf(output, "%s.data[__quil_check_bounds(%s.size, ", node->data.assign.name, node->data.assign.name);
                         codegen_node(node->data.assign.index, output, level);
                         fprintf(output, ")] = ");
                 } else {
@@ -246,7 +233,7 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 fprintf(output, "'%c'", node->data.char_literal.value);
                 break;
         case NODE_LIST_LITERAL: {
-                // e.g. [1, 2] in a vec<int> decl → __pinum_vec_int_init(2, (int)1, (int)2)
+                // e.g. [1, 2] in a vec<int> decl → __quil_vec_int_init(2, (int)1, (int)2)
                 // each element is cast to the vec's element type so the variadic
                 // init() reads the correct C type (e.g. int literals in a vec<double>
                 // must be passed as double, not int — otherwise va_arg misreads them).
@@ -257,7 +244,7 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 } else {
                         elem = "int32";
                 }
-                fprintf(output, "__pinum_%s_init(%d", vec_type, node->data.list_literal.count);
+                fprintf(output, "__quil_%s_init(%d", vec_type, node->data.list_literal.count);
                 for (int i = 0; i < node->data.list_literal.count; i++) {
                         fprintf(output, ", (%s)", elem);
                         codegen_node(node->data.list_literal.elements[i], output, level);
@@ -270,7 +257,7 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 break;
         case NODE_ARRAY_ACCESS:
                 // bound check using runtime function first
-                fprintf(output, "%s.data[__pinum_check_bounds(%s.size, ", node->data.array_access.name, node->data.array_access.name);
+                fprintf(output, "%s.data[__quil_check_bounds(%s.size, ", node->data.array_access.name, node->data.array_access.name);
                 codegen_node(node->data.array_access.index, output, level);
                 fprintf(output, ")]");
                 break;
@@ -280,16 +267,16 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 // char repetition
                 if (node->data.binary_expression.op == TOKEN_STAR) {
                         if (is_char(node->data.binary_expression.left)) {
-                                // 'a' * 3  →  __pinum_repeat_char('a', 3)
-                                fprintf(output, "__pinum_repeat_char(");
+                                // 'a' * 3  →  __quil_repeat_char('a', 3)
+                                fprintf(output, "__quil_repeat_char(");
                                 codegen_node(node->data.binary_expression.left, output, level);
                                 fprintf(output, ", ");
                                 codegen_node(node->data.binary_expression.right, output, level);
                                 fprintf(output, ")");
                                 break;
                         } else if (is_char(node->data.binary_expression.right)) {
-                                // 3 * 'a'  →  __pinum_repeat_char('a', 3)  (args swapped!)
-                                fprintf(output, "__pinum_repeat_char(");
+                                // 3 * 'a'  →  __quil_repeat_char('a', 3)  (args swapped!)
+                                fprintf(output, "__quil_repeat_char(");
                                 codegen_node(node->data.binary_expression.right, output, level);
                                 fprintf(output, ", ");
                                 codegen_node(node->data.binary_expression.left, output, level);
@@ -300,16 +287,16 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 // string repetition
                 if (node->data.binary_expression.op == TOKEN_STAR) {
                         if (is_string(node->data.binary_expression.left)) {
-                                // 'a' * 3  →  __pinum_repeat_char('a', 3)
-                                fprintf(output, "__pinum_repeat_string(");
+                                // 'a' * 3  →  __quil_repeat_char('a', 3)
+                                fprintf(output, "__quil_repeat_string(");
                                 codegen_node(node->data.binary_expression.left, output, level);
                                 fprintf(output, ", ");
                                 codegen_node(node->data.binary_expression.right, output, level);
                                 fprintf(output, ")");
                                 break;
                         } else if (is_string(node->data.binary_expression.right)) {
-                                // 3 * 'a'  →  __pinum_repeat_char('a', 3)  (args swapped!)
-                                fprintf(output, "__pinum_repeat_string(");
+                                // 3 * 'a'  →  __quil_repeat_char('a', 3)  (args swapped!)
+                                fprintf(output, "__quil_repeat_string(");
                                 codegen_node(node->data.binary_expression.right, output, level);
                                 fprintf(output, ", ");
                                 codegen_node(node->data.binary_expression.left, output, level);
@@ -319,8 +306,8 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 }
                 // string addition
                 if (node->data.binary_expression.op == TOKEN_PLUS && is_string(node->data.binary_expression.left) && is_string(node->data.binary_expression.right)) {
-                        // "a" + "b"  →  __pinum_add_string__("a", "b")
-                        fprintf(output, "__pinum_add_string(");
+                        // "a" + "b"  →  __quil_add_string__("a", "b")
+                        fprintf(output, "__quil_add_string(");
                         codegen_node(node->data.binary_expression.left, output, level);
                         fprintf(output, ", ");
                         codegen_node(node->data.binary_expression.right, output, level);
@@ -378,7 +365,7 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
         }
         case NODE_ASSIGN:
                 if (node->data.assign.index) {
-                        fprintf(output, "%s.data[__pinum_check_bounds(%s.size, ", node->data.assign.name, node->data.assign.name);
+                        fprintf(output, "%s.data[__quil_check_bounds(%s.size, ", node->data.assign.name, node->data.assign.name);
                         codegen_node(node->data.assign.index, output, level);
                         fprintf(output, ")] = ");
                 } else {
@@ -467,7 +454,7 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                                         fprintf(output, ");\n");
                                 }
                                 // vec args print their own "[1, 2]" via the runtime helper
-                                fprintf(output, "__pinum_%s_print(", node->data.print.args[i]->resolved_type);
+                                fprintf(output, "__quil_%s_print(", node->data.print.args[i]->resolved_type);
                                 codegen_node(node->data.print.args[i], output, level);
                                 fprintf(output, ");\n");
                                 group_start = i + 1;
@@ -529,7 +516,7 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 const char *member = node->data.member_access.member;
                 if (node->data.member_access.arg_count > 0) {
                         const method_def *m = method_lookup(obj->resolved_type, member);
-                        // build helper name: __pinum_%_append
+                        // build helper name: __quil_%_append
                         char fn[64];
                         snprintf(fn, sizeof(fn), m->c_helper, obj->resolved_type);
                         fprintf(output, "%s(&", fn);
@@ -561,18 +548,18 @@ void codegen_c(ASTnode *program, FILE *output) {
 #ifndef __wasm__
         char *home_dir = getenv("HOME");
         char path[1024];
-        snprintf(path, sizeof(path), "%s/.pinum-lang/runtime/pinum_runtime.h", home_dir);
+        snprintf(path, sizeof(path), "%s/.quil-lang/runtime/quil_runtime.h", home_dir);
 
-        // check for .pinum-lang directory
+        // check for .quil-lang directory
         if (access(path, F_OK)) {
-                pinum_error(STAGE_CODEGEN, ERR_RUNTIME_MISSING, path);
+                quil_error(STAGE_CODEGEN, ERR_RUNTIME_MISSING, path);
         }
 
-        fprintf(output, "#include \"%s/.pinum-lang/runtime/pinum_runtime.h\"\n", home_dir);
+        fprintf(output, "#include \"%s/.quil-lang/runtime/quil_runtime.h\"\n", home_dir);
 #else
-        fprintf(output, "#include \"pinum_runtime.h\"\n");
-        fprintf(output, "#include \"pinum_rtvec.h\"\n");
-        fprintf(output, "#include \"pinum_rtstrchr.h\"\n");
+        fprintf(output, "#include \"quil_runtime.h\"\n");
+        fprintf(output, "#include \"quil_rtvec.h\"\n");
+        fprintf(output, "#include \"quil_rtstrchr.h\"\n");
 #endif
         // emit every top-level declaration at file scope
         for (int i = 0; i < program->data.program.count; i++) {

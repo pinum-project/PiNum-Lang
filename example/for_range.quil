@@ -2,7 +2,7 @@ fn main() {
 # for (RANGE) — run a body a fixed number of times.
 #
 # `for (N) { body }` expands at parse time to a classic for loop:
-#     for (int32 __pinum_i0 = 0; __pinum_i0 < N; __pinum_i0++) { body }
+#     for (int32 __quil_i0 = 0; __quil_i0 < N; __quil_i0++) { body }
 # Each range loop gets a unique hidden counter, so nesting just works.
 
 # --- basic count ---

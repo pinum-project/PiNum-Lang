@@ -1,25 +1,17 @@
-/********************************************************************
- *   _____ _ _   _                       _                          *
- *  |  __ (_) \ | |                     | |                         *
- *  | |__) ||  \| |_   _ _ __ ___ ______| |     __ _ _ __   __ _    *
- *  |  ___/ | . ` | | | | '_ ` _ \______| |    / _` | '_ \ / _` |   *
- *  | |   | | |\  | |_| | | | | | |     | |___| (_| | | | | (_| |   *
- *  |_|   | |_| \_|\__,_|_| |_| |_|     |______\__,_|_| |_|\__, |   *
- *                                                          __/ |   *
- *                                                         |___/    *
- *                                                                  *
- *  Copyright (c) 2026 tanvir-techbro.                              *
- *  You may opt to use, copy, modify, merge, publish, distribute    *
- *  and/or sell copies of the Software, and permit persons to whom  *
- *  the Software is furnished to do so, under the conditions of the *
- *  LICENSE.                                                        *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, *
- *  EXPRESS OR IMPLIED.                                             *
- *                                                                  *
- *  If you find any bug you would be highly encouraged to create a  *
- *  github issue at <https://github.com/pinum-project/PiNum-Lang>   *
- *  or contact <surjointelligence.team@gmail.com>                   *
- ********************************************************************/
+/**************************************************
+ * QUIL - Quick Unified Iterative Language
+ * Language and Compiler toolchain, Frontend
+ *
+ * Copyright (c) 2026-present quil-project authors.
+ * Licensed under the terms of the LICENSE file.
+ *
+ * Issues: <https://github.com/quil-project/quil>
+ *************************************************/
+
+/*
+ * src/main.c
+ * Main entry, Contains the pipeline
+ */
 
 #include "../include/ast.h"
 #include "../include/cli.h"
@@ -42,7 +34,7 @@
  *            check the codegen mode (engine or normal) -> pass the parsed nodes (normal codegen or engine codegen) to be compiled into C ->
  *            generate payload.c -> compile payload.c to payload (linux)
  *
- *            file.pn (input) -> src/main.c -> src/lexer.c src/lexer_filter.c src/helper.c -> src/main.c -> src/parser.c src/helper.c ->
+ *            file.quil (input) -> src/main.c -> src/lexer.c src/lexer_filter.c src/helper.c -> src/main.c -> src/parser.c src/helper.c ->
  *            src/ast.c -> src/parser.c -> src/main.c -> src/codegen.c = payload/payload.bin (output)
  *
  *            The CLI (flag parsing, --help/--version/--update) lives in src/cli.c.
@@ -75,7 +67,7 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
 #endif
         case CLI_ACTION_REPAIR:
-                // reinstalls the missing .pinum-lang directory
+                // reinstalls the missing .quil-lang directory
 #ifndef __wasm__
                 return cli_repair();
 #else
@@ -93,17 +85,17 @@ int main(int argc, char *argv[]) {
 
         // Checking if the file extention is valid or not.
         if (extention == NULL) {
-                pinum_error(STAGE_FILE, ERR_INVALID_FILE_TYPE, NULL);
-        } else if (!(strcmp(extention, ".pn"))) {
+                quil_error(STAGE_FILE, ERR_INVALID_FILE_TYPE, NULL);
+        } else if (strcmp(extention, ".quil") == 0 || strcmp(extention, ".qil") == 0) {
                 // checking if the file can be opened or not
                 if ((buffer = fopen(filename, "r")) == NULL) {
-                        pinum_error(STAGE_FILE, ERR_CANNOT_OPEN_FILE, filename);
+                        quil_error(STAGE_FILE, ERR_CANNOT_OPEN_FILE, filename);
                 }
                 // tell the error reporter which file compile errors refer to
                 error_set_source_file(filename);
                 // If the file open is succesful it will continue with rest of the program.
         } else {
-                pinum_error(STAGE_FILE, ERR_INVALID_FILE_TYPE, NULL);
+                quil_error(STAGE_FILE, ERR_INVALID_FILE_TYPE, NULL);
         }
         // ---------------------
 
@@ -167,7 +159,7 @@ int main(int argc, char *argv[]) {
         FILE *output = fopen(c_path, "w");
 
         if (output == NULL) {
-                pinum_error(STAGE_CODEGEN, ERR_CANNOT_OPEN_FILE, "payload.c");
+                quil_error(STAGE_CODEGEN, ERR_CANNOT_OPEN_FILE, "payload.c");
         }
         codegen_c(ast, output);
         fclose(output);
@@ -236,7 +228,7 @@ static const char *find_compiler(void) {
 }
 static void compile_to(const char *compiler, const char *c_path, const char *bin_path) {
         if (!compiler) {
-                pinum_error(STAGE_CODEGEN, ERR_NO_COMPILER, NULL);
+                quil_error(STAGE_CODEGEN, ERR_NO_COMPILER, NULL);
         }
 
 #ifndef __wasm__
@@ -253,10 +245,10 @@ static void compile_to(const char *compiler, const char *c_path, const char *bin
                 args[3] = NULL;
         }
         if (run_cmd(NULL, compiler, args) != 0) {
-                pinum_error(STAGE_CODEGEN, ERR_COMPILE_FAILED, c_path);
+                quil_error(STAGE_CODEGEN, ERR_COMPILE_FAILED, c_path);
         }
 #else
         fprintf(stderr, "Compiling to a native binary is not supported in the web version.\n");
-        pinum_error(STAGE_CODEGEN, ERR_COMPILE_FAILED, c_path);
+        quil_error(STAGE_CODEGEN, ERR_COMPILE_FAILED, c_path);
 #endif
 }

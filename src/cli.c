@@ -1,25 +1,12 @@
-/********************************************************************
- *   _____ _ _   _                       _                          *
- *  |  __ (_) \ | |                     | |                         *
- *  | |__) ||  \| |_   _ _ __ ___ ______| |     __ _ _ __   __ _    *
- *  |  ___/ | . ` | | | | '_ ` _ \______| |    / _` | '_ \ / _` |   *
- *  | |   | | |\  | |_| | | | | | |     | |___| (_| | | | | (_| |   *
- *  |_|   | |_| \_|\__,_|_| |_| |_|     |______\__,_|_| |_|\__, |   *
- *                                                          __/ |   *
- *                                                         |___/    *
- *                                                                  *
- *  Copyright (c) 2026 tanvir-techbro.                              *
- *  You may opt to use, copy, modify, merge, publish, distribute    *
- *  and/or sell copies of the Software, and permit persons to whom  *
- *  the Software is furnished to do so, under the conditions of the *
- *  LICENSE.                                                        *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, *
- *  EXPRESS OR IMPLIED.                                             *
- *                                                                  *
- *  If you find any bug you would be highly encouraged to create a  *
- *  github issue at <https://github.com/pinum-project/PiNum-Lang>   *
- *  or contact <surjointelligence.team@gmail.com>                   *
- ********************************************************************/
+/**************************************************
+ * QUIL - Quick Unified Iterative Language
+ * Language and Compiler toolchain, Frontend
+ *
+ * Copyright (c) 2026-present quil-project authors.
+ * Licensed under the terms of the LICENSE file.
+ *
+ * Issues: <https://github.com/quil-project/quil>
+ *************************************************/
 
 #include "../include/cli.h"
 #include "../include/error.h"
@@ -46,13 +33,13 @@ int run_cmd(const char *dir, const char *binary, char *const args[]) {
         if (pid == 0) {
                 // change into the requested working directory, if any
                 if (dir != NULL && chdir(dir) < 0) {
-                        pinum_error(STAGE_UPDATER, ERR_UPDATE_CHDIR, strerror(errno));
+                        quil_error(STAGE_UPDATER, ERR_UPDATE_CHDIR, strerror(errno));
                 }
                 // replace the child process binary with the target command.
                 // execvp looks the command up in $PATH instead of assuming an absolute path.
                 execvp(binary, args);
                 // if execvp reaches this line, it failed
-                pinum_error(STAGE_UPDATER, ERR_UPDATE_EXEC, strerror(errno));
+                quil_error(STAGE_UPDATER, ERR_UPDATE_EXEC, strerror(errno));
         }
         // parent process
         else if (pid > 0) {
@@ -82,7 +69,7 @@ void cli_parse(int argc, char *argv[], cli_options *opts) {
         if (argc < 2) {
                 fprintf(stderr, "Usage: %s [Flags] <file>\n", argv[0]);
                 fprintf(stderr, "See '--help' for more info.\n");
-                pinum_error(STAGE_FILE, ERR_NO_INPUT_FILE, NULL);
+                quil_error(STAGE_FILE, ERR_NO_INPUT_FILE, NULL);
         }
 
         int arg_indx = 1; // argument index. arg index 0 is the program binary name
@@ -105,7 +92,7 @@ void cli_parse(int argc, char *argv[], cli_options *opts) {
                 } else if (strcmp(argv[arg_indx], "-o") == 0 || strcmp(argv[arg_indx], "--output") == 0) {
                         // check if there is enough args left to hold the output name
                         if (arg_indx + 1 >= argc) {
-                                pinum_error(STAGE_FILE, ERR_NO_OUTPUT_FILE, NULL);
+                                quil_error(STAGE_FILE, ERR_NO_OUTPUT_FILE, NULL);
                         }
                         // consume the name first so the flag loop does not evaluate
                         // a name with a '.' (like file.c) as a flag
@@ -113,7 +100,7 @@ void cli_parse(int argc, char *argv[], cli_options *opts) {
                         opts->out_mode = (strrchr(opts->out_name, '.') && strcmp(strrchr(opts->out_name, '.'), ".c") == 0) ? CLI_OUT_C : CLI_OUT_BINARY;
                         arg_indx++;
                 } else if (strcmp(argv[arg_indx], "-oc") == 0 || strcmp(argv[arg_indx], "--output-c") == 0) {
-                        if (arg_indx + 1 >= argc) pinum_error(STAGE_FILE, ERR_NO_OUTPUT_FILE, NULL);
+                        if (arg_indx + 1 >= argc) quil_error(STAGE_FILE, ERR_NO_OUTPUT_FILE, NULL);
                         opts->out_name = argv[++arg_indx];
                         opts->out_mode = CLI_OUT_BOTH;
                         arg_indx++;
@@ -134,12 +121,12 @@ void cli_parse(int argc, char *argv[], cli_options *opts) {
                 // Unrecognized and invalid flag handling
                 else {
                         printf("See '--help' for more info.\n");
-                        pinum_error(STAGE_FILE, ERR_INVALID_FLAG, argv[arg_indx]);
+                        quil_error(STAGE_FILE, ERR_INVALID_FLAG, argv[arg_indx]);
                 }
         }
 
         if (arg_indx >= argc) {
-                pinum_error(STAGE_FILE, ERR_NO_INPUT_FILE, NULL);
+                quil_error(STAGE_FILE, ERR_NO_INPUT_FILE, NULL);
         }
         opts->filename = argv[arg_indx];
 }
@@ -148,8 +135,8 @@ void cli_parse(int argc, char *argv[], cli_options *opts) {
 // --- FLAG HANDLING (functions) ---
 // handle the flags '--help' and '-h'
 void cli_print_help() {
-        printf("pinum version %s\n\n", PINUM_VERSION);
-        printf("Usage: pinum [Flags] <file.pn>\n");
+        printf("quil version %s\n\n", QUIL_VERSION);
+        printf("Usage: quil [Flags] <file.quil|file.qil>\n");
         printf("Flags:\n");
         printf("  %-20s\tOutput a C source file (*.c) or a binary (*).\n", "-o, --output");
         printf("  %-20s\tOutput both a C source file and a binary.\n", "-oc, --output-c");
@@ -160,16 +147,16 @@ void cli_print_help() {
         printf("\n");
         printf("  %-20s\tCompile via the QBE backend (emits QBE IL).\n", "--qbe");
         printf("\n");
-        printf("  %-20s\tDisplay pinum version information.\n", "-v, --version");
-        printf("  %-20s\tUpdate pinum to the latest version.\n", "-u, --update");
-        printf("  %-20s\tReinstall to get ~/.pinum-lang directory back.\n", "-r, --repair");
+        printf("  %-20s\tDisplay quil version information.\n", "-v, --version");
+        printf("  %-20s\tUpdate quil to the latest version.\n", "-u, --update");
+        printf("  %-20s\tReinstall to get ~/.quil-lang directory back.\n", "-r, --repair");
         printf("  %-20s\tDisplay this output.\n", "-h, --help");
-        printf("\nIf you find any issue, create a github issue at <https://github.com/pinum-project/PiNum-Lang>\n");
+        printf("\nIf you find any issue, create a github issue at <https://github.com/quil-project/quil>\n");
 }
 
 // handle the flags '--version' and '-v'
 void cli_print_version() {
-        printf("PiNum-Lang version %s\n", PINUM_VERSION);
+        printf("quil version %s\n", QUIL_VERSION);
 }
 
 // --- Updating pipeline ---
@@ -177,9 +164,9 @@ void cli_print_version() {
 static char g_latest_version[64] = {0};
 // returns 1 if an update is available, 0 if up to date; exits on failure.
 static int check_update() {
-        FILE *online_version = popen("curl -sSL --fail https://raw.githubusercontent.com/pinum-project/PiNum-Lang/main/VERSION", "r");
+        FILE *online_version = popen("curl -sSL --fail https://raw.githubusercontent.com/quil-project/quil/main/VERSION", "r");
         if (online_version == NULL) {
-                pinum_error(STAGE_UPDATER, ERR_UPDATE_START, NULL);
+                quil_error(STAGE_UPDATER, ERR_UPDATE_START, NULL);
         }
 
         char version[64] = {0};
@@ -191,11 +178,11 @@ static int check_update() {
 
         int status = pclose(online_version);
         if (status != 0 || version[0] == '\0') {
-                pinum_error(STAGE_UPDATER, ERR_UPDATE_CHECK, NULL); // fetch failed
+                quil_error(STAGE_UPDATER, ERR_UPDATE_CHECK, NULL); // fetch failed
         }
-        // if version != PINUM_VERSION it returns 1 (update available),
-        // if version == PINUM_VERSION it returns 0 (up to date)
-        return strcmp(version, PINUM_VERSION) != 0;
+        // if version != QUIL_VERSION it returns 1 (update available),
+        // if version == QUIL_VERSION it returns 0 (up to date)
+        return strcmp(version, QUIL_VERSION) != 0;
 }
 static char g_update_dir[512] = {0};
 // removes the two temp files and the temp directory used by the updater
@@ -220,10 +207,10 @@ static void check_hash() {
 
         // creating a unique directory
         char dir_template[1024];
-        snprintf(dir_template, sizeof(dir_template), "%s/pinum_update_XXXXXX", tmpdir);
+        snprintf(dir_template, sizeof(dir_template), "%s/quil_update_XXXXXX", tmpdir);
         char *tmp_dir = mkdtemp(dir_template);
         if (!tmp_dir) {
-                pinum_error(STAGE_UPDATER, ERR_UPDATE_TMP_DIR, NULL);
+                quil_error(STAGE_UPDATER, ERR_UPDATE_TMP_DIR, NULL);
         }
         strncpy(g_update_dir, tmp_dir, sizeof(g_update_dir) - 1);
 
@@ -235,7 +222,7 @@ static void check_hash() {
 
         // script url, pinned to the same release tag as the checksum
         char script_url[1024] = {0};
-        snprintf(script_url, sizeof(script_url), "https://raw.githubusercontent.com/pinum-project/PiNum-Lang/v%s/install.sh", g_latest_version);
+        snprintf(script_url, sizeof(script_url), "https://raw.githubusercontent.com/quil-project/quil/v%s/install.sh", g_latest_version);
 
         // downloading install.sh into the installer_path
         printf("Downloading installer script (install.sh)...\n");
@@ -251,12 +238,12 @@ static void check_hash() {
         // curl installation failed
         if (run_cmd(NULL, "curl", curl_installer_args) != 0) {
                 cleanup_temp();
-                pinum_error(STAGE_UPDATER, ERR_UPDATE_DOWNLOAD_SCRIPT, NULL);
+                quil_error(STAGE_UPDATER, ERR_UPDATE_DOWNLOAD_SCRIPT, NULL);
         }
 
         // hash url
         char hash_url[1024] = {0};
-        snprintf(hash_url, sizeof(hash_url), "https://github.com/pinum-project/PiNum-Lang/releases/download/v%s/install.sh.sha256", g_latest_version);
+        snprintf(hash_url, sizeof(hash_url), "https://github.com/quil-project/quil/releases/download/v%s/install.sh.sha256", g_latest_version);
 
         // downloading install.sh.sha256 into the hash_path
         printf("Downloading checksum file (install.sh.sha256)...\n");
@@ -272,7 +259,7 @@ static void check_hash() {
         // curl installation failed
         if (run_cmd(NULL, "curl", curl_hash_args) != 0) {
                 cleanup_temp();
-                pinum_error(STAGE_UPDATER, ERR_UPDATE_DOWNLOAD_CHECKSUM, NULL);
+                quil_error(STAGE_UPDATER, ERR_UPDATE_DOWNLOAD_CHECKSUM, NULL);
         }
 
         // verify the checksum in the temp directory so the relative
@@ -287,7 +274,7 @@ static void check_hash() {
 #endif
         if (run_cmd(g_update_dir, sha_cmd, sha_args) != 0) {
                 cleanup_temp();
-                pinum_error(STAGE_UPDATER, ERR_UPDATE_CHECKSUM_VERIFY, NULL);
+                quil_error(STAGE_UPDATER, ERR_UPDATE_CHECKSUM_VERIFY, NULL);
         }
         // checksum passed; keep files for install step
 }
@@ -296,7 +283,7 @@ int cli_update() {
         printf("Checking for updates...\n");
         int check = check_update();
         if (check == 0) {
-                // pinum up to date
+                // quil up to date
                 printf("Up to date!\n");
                 return EXIT_SUCCESS;
         }

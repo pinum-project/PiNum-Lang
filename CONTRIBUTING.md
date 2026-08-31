@@ -1,6 +1,6 @@
-# Contributing to PiNum-Lang
+# Contributing to quil
 
-First of all, thank you for your interest in contributing to **PiNum-Lang**! 🚀 We welcome all contributors who share our passion for building a lightweight, efficient, and clean programming language.
+First of all, thank you for your interest in contributing to **quil**! 🚀 We welcome all contributors who share our passion for building a lightweight, efficient, and clean programming language.
 
 To ensure the codebase remains maintainable and high-quality, we have established a few rules and guidelines that all contributors must follow.
 
@@ -28,11 +28,12 @@ clang-format -i src/*.c include/*.h
 Any PR with inconsistent formatting will be requested to be updated.
 
 ### 🧠 Memory Safety (Valgrind)
-PiNum-Lang is written in C, which means memory management is critical. We have a zero-tolerance policy for memory leaks and invalid accesses.
+quil is written in C, which means memory management is critical. We have a zero-tolerance policy for memory leaks and invalid accesses.
 
 You **must** use [Valgrind](https://valgrind.org/) to verify your changes. Before submitting a PR, ensure that running the compiler on sample programs produces no errors:
 ```bash
-valgrind --leak-check=full --show-leak-kinds=all ./bin/pinum example/helloworld.pn
+valgrind --leak-check=full --show-leak-kinds=all ./bin/quil example/helloworld.quil
+# also works with .qil files: ./bin/quil example/helloworld.qil
 ```
 
 ### 🔢 Versioning
@@ -66,9 +67,10 @@ feat: add support for ternary operators in parser
 
 Quality is non-negotiable. Your code should pass all standard tests located in the `test/` directory.
 
-Currently, you should verify your changes by running the `pinum` binary against the test files:
+Currently, you should verify your changes by running the `quil` binary against the test files:
 ```bash
-./bin/pinum test/lexer-tests/test.pn
+./bin/quil test/lexer-tests/test.quil
+# or ./bin/quil test/lexer-tests/test.qil
 ```
 Ensure that the output matches expectations and that no regressions are introduced in existing tests (lexer, parser, etc.).
 
@@ -80,9 +82,9 @@ Ensure that the output matches expectations and that no regressions are introduc
 2.  **Implement** your changes, keeping them focused and surgical.
 3.  **Format** your code using `clang-format`.
 4.  **Verify** memory safety with `Valgrind`.
-5.  **Test** your changes against existing `.pn` files in `test/` and `example/`.
+5.  **Test** your changes against existing `.quil`/`.qil` files in `test/` and `example/`.
 6.  **Submit** a Pull Request to the `development` branch with a clear description of what you've done and why.
 
 ---
 
-Thank you for helping make PiNum-Lang better! Happy coding! 💻✨
+Thank you for helping make quil better! Happy coding! 💻✨

@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in the PiNum compiler or runtime
+description: Report a bug in the Quil compiler or runtime
 title: "bug: "
 labels: ["bug"]
 body:
@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for taking the time to report a bug! Before submitting:
-        - Search [existing issues](https://github.com/pinum-project/PiNum-Lang/issues) to avoid duplicates.
+        - Search [existing issues](https://github.com/quil-project/quil/issues) to avoid duplicates.
         - Make sure you are on the latest release or the `development` branch.
 
   - type: textarea
@@ -24,9 +24,9 @@ body:
     id: reproduction
     attributes:
       label: Steps to Reproduce
-      description: Provide a minimal `.pn` file and the exact commands you ran.
+      description: Provide a minimal `.quil`/`.qil` file and the exact commands you ran.
       placeholder: |
-        ```pinum
+        ```quil
         int i = 0
         while (i < 3) {
                 print(i, "\n")
@@ -34,7 +34,8 @@ body:
         }
         ```
 
-        ./bin/pinum repro.pn
+        ./bin/quil repro.quil
+        # (also works with .qil: ./bin/quil repro.qil)
         ./a.out
     validations:
       required: true
@@ -58,8 +59,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: PiNum Version
-      description: Output of `cat VERSION` or `./bin/pinum --version` if available.
+      label: Quil Version
+      description: Output of `cat VERSION` or `./bin/quil --version` if available.
       placeholder: "1.0.0-beta"
     validations:
       required: true

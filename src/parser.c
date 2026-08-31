@@ -1,25 +1,12 @@
-/********************************************************************
- *   _____ _ _   _                       _                          *
- *  |  __ (_) \ | |                     | |                         *
- *  | |__) ||  \| |_   _ _ __ ___ ______| |     __ _ _ __   __ _    *
- *  |  ___/ | . ` | | | | '_ ` _ \______| |    / _` | '_ \ / _` |   *
- *  | |   | | |\  | |_| | | | | | |     | |___| (_| | | | | (_| |   *
- *  |_|   | |_| \_|\__,_|_| |_| |_|     |______\__,_|_| |_|\__, |   *
- *                                                          __/ |   *
- *                                                         |___/    *
- *                                                                  *
- *  Copyright (c) 2026 tanvir-techbro.                              *
- *  You may opt to use, copy, modify, merge, publish, distribute    *
- *  and/or sell copies of the Software, and permit persons to whom  *
- *  the Software is furnished to do so, under the conditions of the *
- *  LICENSE.                                                        *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, *
- *  EXPRESS OR IMPLIED.                                             *
- *                                                                  *
- *  If you find any bug you would be highly encouraged to create a  *
- *  github issue at <https://github.com/pinum-project/PiNum-Lang>   *
- *  or contact <surjointelligence.team@gmail.com>                   *
- ********************************************************************/
+/**************************************************
+ * QUIL - Quick Unified Iterative Language
+ * Language and Compiler toolchain, Frontend
+ *
+ * Copyright (c) 2026-present quil-project authors.
+ * Licensed under the terms of the LICENSE file.
+ *
+ * Issues: <https://github.com/quil-project/quil>
+ *************************************************/
 
 // NOTE: This parser uses recursive decent parsing method.
 #include "../include/parser.h"
@@ -206,14 +193,14 @@ ASTnode *parse_for_statement(Parser *parser) {
         } else {
                 // for (range) {body}  OR  for (i = 0; cond; inc) {body}
                 ASTnode *range = parse_expression(parser);
-                // for (range)  →  for (int __pinum_i<N> = 0; __pinum_i<N> < RANGE; __pinum_i<N>++)
+                // for (range)  →  for (int __quil_i<N> = 0; __quil_i<N> < RANGE; __quil_i<N>++)
                 if (check(parser, TOKEN_RRPAREN)) {
                         consume(parser, TOKEN_RRPAREN, "')'");
                         ASTnode *body = parse_block(parser);
 
                         // generate uniques index name for each scope
                         static int rng_counter = 0;
-                        const char *idx = "__pinum_i";
+                        const char *idx = "__quil_i";
                         char idx_name[32];
                         snprintf(idx_name, sizeof(idx_name), "%s%d", idx, rng_counter++);
                         ASTnode *rinit = make_var_decl_node("int", NULL, (char *)idx_name, make_int_node(0), false, 0);
@@ -298,12 +285,12 @@ static void parse_type(Parser *parser, char **out_type_name, char **out_element_
                 else if (match(parser, TOKEN_BOOL)) *out_element_type = "bool";
                 else {
                         token found = peek(parser);
-                        pinum_expected_at(STAGE_PARSER, found.line, found.col, "element type (int32, float64, etc.)", peek_display(parser));
+                        quil_expected_at(STAGE_PARSER, found.line, found.col, "element type (int32, float64, etc.)", peek_display(parser));
                 }
                 consume(parser, TOKEN_RABRACKET, "'>' after element type");
         } else {
                 token found = peek(parser);
-                pinum_expected_at(STAGE_PARSER, found.line, found.col, "a data type (int32, float64, vec<int32>, etc.)", peek_display(parser));
+                quil_expected_at(STAGE_PARSER, found.line, found.col, "a data type (int32, float64, vec<int32>, etc.)", peek_display(parser));
         }
 }
 ASTnode *parse_declaration(Parser *parser) {
@@ -495,7 +482,7 @@ ASTnode *parse_primary(Parser *parser) {
 
         // Error
         token found = peek(parser);
-        pinum_error_at(STAGE_PARSER, ERR_UNEXPECTED_TOKEN, found.line, found.col, peek_display(parser));
+        quil_error_at(STAGE_PARSER, ERR_UNEXPECTED_TOKEN, found.line, found.col, peek_display(parser));
 }
 // parses function call and member access
 // parses and refers to parse_primary
@@ -508,7 +495,7 @@ ASTnode *parse_call(Parser *parser) {
                 if (match(parser, TOKEN_LRPAREN)) {
                         if (node->type != NODE_IDENTIFIER) {
                                 token trigger = parser->tokens->tokens[parser->current - 1];
-                                pinum_error_at(STAGE_PARSER, ERR_INVALID_CALL_TARGET, trigger.line, trigger.col, node_type_name(node->type));
+                                quil_error_at(STAGE_PARSER, ERR_INVALID_CALL_TARGET, trigger.line, trigger.col, node_type_name(node->type));
                         }
                         int line = node->line;
                         int col = node->col;
@@ -575,7 +562,7 @@ ASTnode *parse_call(Parser *parser) {
                 else if (match(parser, TOKEN_PPLUS)) {
                         if (node->type != NODE_IDENTIFIER) {
                                 token trigger = parser->tokens->tokens[parser->current - 1];
-                                pinum_error_at(STAGE_PARSER, ERR_INVALID_ASSIGN_TARGET, trigger.line, trigger.col, node_type_name(node->type));
+                                quil_error_at(STAGE_PARSER, ERR_INVALID_ASSIGN_TARGET, trigger.line, trigger.col, node_type_name(node->type));
                         }
                         int line = node->line;
                         int col = node->col;
@@ -591,7 +578,7 @@ ASTnode *parse_call(Parser *parser) {
                 else if (match(parser, TOKEN_MMINUS)) {
                         if (node->type != NODE_IDENTIFIER) {
                                 token trigger = parser->tokens->tokens[parser->current - 1];
-                                pinum_error_at(STAGE_PARSER, ERR_INVALID_ASSIGN_TARGET, trigger.line, trigger.col, node_type_name(node->type));
+                                quil_error_at(STAGE_PARSER, ERR_INVALID_ASSIGN_TARGET, trigger.line, trigger.col, node_type_name(node->type));
                         }
                         int line = node->line;
                         int col = node->col;
@@ -746,7 +733,7 @@ ASTnode *parse_assignment(Parser *parser) {
                         return assign;
                 }
                 if (node->type != NODE_IDENTIFIER) {
-                        pinum_error_at(STAGE_PARSER, ERR_INVALID_ASSIGN_TARGET, trigger.line, trigger.col, node_type_name(node->type));
+                        quil_error_at(STAGE_PARSER, ERR_INVALID_ASSIGN_TARGET, trigger.line, trigger.col, node_type_name(node->type));
                 }
                 int line = node->line;
                 int col = node->col;
@@ -764,7 +751,7 @@ ASTnode *parse_assignment(Parser *parser) {
                 token trigger = parser->tokens->tokens[parser->current - 1];
                 ASTnode *value = parse_assignment(parser);
                 if (node->type != NODE_IDENTIFIER) {
-                        pinum_error_at(STAGE_PARSER, ERR_INVALID_ASSIGN_TARGET, trigger.line, trigger.col, node_type_name(node->type));
+                        quil_error_at(STAGE_PARSER, ERR_INVALID_ASSIGN_TARGET, trigger.line, trigger.col, node_type_name(node->type));
                 }
                 int line = node->line;
                 int col = node->col;

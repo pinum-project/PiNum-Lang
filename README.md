@@ -1,11 +1,11 @@
-<p align="center">
-  <img src="extras/assets/pinum_logo.svg" alt="PiNum Logo" width="200" />
+<p align="left">
+  <img src="extras/assets/quil_more_text.png" alt="Quil Logo" width="200" />
 </p>
 
-# PiNum-Lang 1.3.3-beta
+# quil 1.3.3-beta
 
-https://pinum-project.github.io - official site for pinum. check for documentation and other info.
-PiNum (represented by the `.pn` extension) is a lightweight, C-inspired programming language currently under development.
+https://quil-project.github.io - official site for quil. check for documentation and other info.
+Quil (represented by the `.quil` and `.qil` extensions) is a lightweight, C-inspired programming language currently under development.
 ## ✨ Features
 
 - **C-Style Syntax:** Familiar, fixed-width data types (`int8`/`int16`/`int32`/`int64`, `uint8`/`uint16`/`uint32`/`uint64`, `float32`/`float64`, `char`, `string`, `bool`) and control structures (`if`, `else`, `return`, `while`, `for`).
@@ -29,15 +29,15 @@ PiNum (represented by the `.pn` extension) is a lightweight, C-inspired programm
 
 ### One-line Installation
 
-The fastest way to install PiNum-Lang on your system:
+The fastest way to install quil on your system:
 
 #### Linux/macOS (bash/zsh)
 ```bash
-curl -sSL https://raw.githubusercontent.com/pinum-project/PiNum-Lang/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/quil-project/quil/main/install.sh | bash
 ```
 *This will build the language and ask if you want to activate Neovim syntax highlighting and install the VS Code extension automatically.*
 
-> **Windows users:** PiNum-Lang supports Linux/macOS only. If you're on Windows, use [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/en-us/windows/wsl/install) and follow the Linux instructions above.
+> **Windows users:** quil supports Linux/macOS only. If you're on Windows, use [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/en-us/windows/wsl/install) and follow the Linux instructions above.
 
 ### Prerequisites
 
@@ -45,7 +45,7 @@ curl -sSL https://raw.githubusercontent.com/pinum-project/PiNum-Lang/main/instal
 
 ### Building from Source
 
-To build the `pinum` binary:
+To build the `quil` binary:
 
 ```bash
 make
@@ -55,7 +55,7 @@ The compiled binary will be located in the `bin/` directory.
 
 ### Installation
 
-To install `pinum` to your system path:
+To install `quil` to your system path:
 
 #### Linux/macOS
 ```bash
@@ -65,13 +65,15 @@ This moves the binary to `/usr/local/bin/`.
 
 ### Running a Program
 
-To transpile and compile a `.pn` file to a binary (default output is `a.out`):
+To transpile and compile a `.quil`/`.qil` file to a binary (default output is `a.out`):
 
 ```bash
-./bin/pinum example/demonstration.pn
+./bin/quil example/demonstration.quil
+# or
+./bin/quil example/demonstration.qil
 ```
 
-PiNum transpiles your code to C, then compiles it with an available C compiler (it searches for `cc`, `gcc`, `clang`, or `tcc`, or uses your `$CC`). The compiled binary lands in your current working directory.
+Quil transpiles your code to C, then compiles it with an available C compiler (it searches for `cc`, `gcc`, `clang`, or `tcc`, or uses your `$CC`). The compiled binary lands in your current working directory.
 
 ### Output Flags
 
@@ -79,13 +81,13 @@ Control what gets produced with the output flags:
 
 ```bash
 # compile to a binary named `program` (temporary C file is deleted)
-./bin/pinum -o program example/demonstration.pn
+./bin/quil -o program example/demonstration.quil
 
 # output only the C source file
-./bin/pinum -o program.c example/demonstration.pn
+./bin/quil -o program.c example/demonstration.quil
 
 # output both the C source file and a compiled binary
-./bin/pinum -oc program example/demonstration.pn
+./bin/quil -oc program example/demonstration.quil
 ```
 
 Long forms `--output` and `--output-c` are also accepted. Use `--help` to see all flags.
@@ -96,7 +98,7 @@ Even though its under development, the syntax (to some extent) is defined.
 
 **Semicolons are optional.** A newline ends a statement, but semicolons let you write multiple statements on one line:
 
-```pinum
+```quil
 # both of these work
 int32 a = 5;
 int32 b = 5
@@ -106,20 +108,20 @@ int32 c = 1; print(c, "\n"); c = c + 1; print(c, "\n");
 ```
 
 ### Comments
-```pinum
+```quil
 # this is a comment!
 # there is only single line comments.
 ```
 
 ### Libreries
-```pinum
+```quil
 # stdlib is imported automatically, no need for @import
 # this flag enables this language to be transpiled into bare C
 @for engine
 ```
 
 ### Variable declaration
-```pinum
+```quil
 # integers: signed and unsigned, 8/16/32/64 bits wide
 int32 number = 10
 int64 big = 123456789
@@ -135,7 +137,7 @@ float64 numero = 2.718
 
 # character, string and boolean
 char letter = 'P'
-string name = "pinum"
+string name = "quil"
 bool ready = true
 
 # compound assignment operators
@@ -152,7 +154,7 @@ amount--
 ```
 
 ### Output & input
-```pinum
+```quil
 # print accepts any number of arguments; println adds a newline
 print("hello ", name, "\n")
 println("count = ", number)
@@ -174,7 +176,7 @@ println("Hello, " + name + "!")
 ```
 
 ### Expressions
-```pinum
+```quil
 int32 a = 10
 int32 b = 3
 
@@ -196,7 +198,7 @@ int32 result = (a + b) * 2
 ```
 
 ### Conditions
-```pinum
+```quil
 if (condition) {
         # task 1
 } else if (condition) {
@@ -207,7 +209,7 @@ if (condition) {
 ```
 
 ### Loops
-```pinum
+```quil
 # while loop
 while (condition) {
         # task
@@ -244,11 +246,11 @@ for (3) {
 ```
 
 ### Vectors
-```pinum
+```quil
 # a growable vector, monomorphized per element type
 vec<int32> nums = [3, 5, 6]
 vec<float32> ratios = [1.5, 2.5]
-vec<string> words = ["PiNum", "rocks"]
+vec<string> words = ["Quil", "rocks"]
 vec<int32> empty = []
 
 # methods and properties
@@ -261,7 +263,7 @@ nums[1] = 99
 ```
 
 ### Functions
-```pinum
+```quil
 # define with: fn name(params): returnType { ... }
 # the ': returnType' part is optional; omit it for a void function.
 fn square(int32 n): int32 {
@@ -281,7 +283,7 @@ fn factorial(int32 n): int32 {
 ```
 
 ### Return
-```pinum
+```quil
 # exits the program (or current function) with the given value
 return 0
 ```
@@ -307,7 +309,7 @@ Tests cover the lexer, parser, AST, and codegen stages. Codegen tests transpile 
 
 ## 🚧 Development Status
 
-PiNum is currently in its early stages:
+Quil is currently in its early stages:
 - [x] Lexer / Tokenizer
 - [x] AST
 - [x] Parser

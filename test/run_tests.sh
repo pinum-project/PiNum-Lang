@@ -19,16 +19,16 @@
 #  EXPRESS OR IMPLIED.                                             #
 #                                                                  #
 #  If you find any bug you would be highly encouraged to create a  #
-#  github issue at <https://github.com/pinum-project/PiNum-Lang>   #
+#  github issue at <https://github.com/quil-project/quil>   #
 #  or contact <surjointelligence.team@gmail.com>                   #
 #******************************************************************#
 
-# This script is an automated test runner for PiNum-Lang.
+# This script is an automated test runner for quil.
 # It allows running specific categories of tests (Lexer, AST, Parser, Codegen)
 # and optionally checking for memory leaks using Valgrind.
 #
 # NOTE: Make sure to run "make" in the root directory before running this script
-# to ensure the "bin/pinum" executable is up to date.
+# to ensure the "bin/quil" executable is up to date.
 
 # ANSI Color Codes for enhanced terminal output
 RED='\033[1;31m'
@@ -38,15 +38,15 @@ CYAN='\033[1;36m'
 NC='\033[0m' # No Color (Reset)
 
 # --- Prerequisite Check ---
-# Ensure the PiNum compiler binary exists before attempting to run tests
-if [ ! -f "bin/pinum" ]; then
-        echo -e "${RED}Error: bin/pinum not found.${NC}"
+# Ensure the Quil compiler binary exists before attempting to run tests
+if [ ! -f "bin/quil" ]; then
+        echo -e "${RED}Error: bin/quil not found.${NC}"
         echo -e "${YELLOW}Please run 'make' to build the project first.${NC}"
         exit 1
 fi
 
 # --- Core Testing Function ---
-# logic: iterates through all .pn files in a directory, executes bin/pinum on
+# logic: iterates through all .quil files in a directory, executes bin/quil on
 # them and asserts the compiler exits cleanly (PASS) or not (FAIL).
 # Arguments:
 #   $1: Directory containing test files
@@ -63,8 +63,8 @@ run_tests() {
                 return
         fi
 
-        # Glob all .pn files in the specified directory
-        files=$(ls "$dir"/*.pn 2>/dev/null)
+        # Glob all .quil files in the specified directory
+        files=$(ls "$dir"/*.quil "$dir"/*.qil 2>/dev/null)
         if [ -z "$files" ]; then
                 echo -e "${YELLOW}No tests found in $dir.${NC}"
                 return
@@ -80,10 +80,10 @@ run_tests() {
                 if [ "$use_valgrind" = "y" ]; then
                         # Run with Valgrind to check for memory leaks/errors.
                         # Keep stderr (the leak report) visible; hide the debug dump on stdout.
-                        valgrind --leak-check=full --show-leak-kinds=all ./bin/pinum --debug-all "$file" >/dev/null
+                        valgrind --leak-check=full --show-leak-kinds=all ./bin/quil --debug-all "$file" >/dev/null
                 else
                         # Normal execution
-                        ./bin/pinum --debug-all "$file" >/dev/null 2>&1
+                        ./bin/quil --debug-all "$file" >/dev/null 2>&1
                 fi
                 exit_code=$?
 
@@ -98,7 +98,7 @@ run_tests() {
 }
 
 # --- Semantic Testing Function ---
-# runs each .pn file and checks the exit code: files prefixed with
+# runs each .quil file and checks the exit code: files prefixed with
 # "valid_" must compile (exit 0), files prefixed with "invalid_" must be
 # rejected by semantic analysis (non-zero exit).
 # Arguments:
@@ -113,7 +113,7 @@ run_semantic_tests() {
                 return
         fi
 
-        files=$(ls "$dir"/*.pn 2>/dev/null)
+        files=$(ls "$dir"/*.quil "$dir"/*.qil 2>/dev/null)
         if [ -z "$files" ]; then
                 echo -e "${YELLOW}No tests found in $dir.${NC}"
                 return
@@ -131,9 +131,9 @@ run_semantic_tests() {
                 echo -e "${GREEN}Testing: $test_name${NC}"
                 if [ "$use_valgrind" = "y" ]; then
                         # keep stderr (the leak report) visible for the invalid files
-                        echo "42" | valgrind --leak-check=full --show-leak-kinds=all ./bin/pinum -oc "$file.tmp.out" "$file" >/dev/null
+                        echo "42" | valgrind --leak-check=full --show-leak-kinds=all ./bin/quil -oc "$file.tmp.out" "$file" >/dev/null
                 else
-                        echo "42" | ./bin/pinum -oc "$file.tmp.out" "$file" >/dev/null 2>&1
+                        echo "42" | ./bin/quil -oc "$file.tmp.out" "$file" >/dev/null 2>&1
                 fi
                 exit_code=$?
 
@@ -164,7 +164,7 @@ run_semantic_tests() {
 }
 
 # --- Codegen Testing Function ---
-# transpiles each .pn file to payload.c, compiles it to the payload binary,
+# transpiles each .quil file to payload.c, compiles it to the payload binary,
 # then runs the binary to make sure it executes and exits cleanly.
 # Arguments:
 #   $1: Directory containing codegen test files
@@ -178,7 +178,7 @@ run_codegen_tests() {
                 return
         fi
 
-        files=$(ls "$dir"/*.pn 2>/dev/null)
+        files=$(ls "$dir"/*.quil "$dir"/*.qil 2>/dev/null)
         if [ -z "$files" ]; then
                 echo -e "${YELLOW}No tests found in $dir.${NC}"
                 return
@@ -187,17 +187,19 @@ run_codegen_tests() {
         echo -e "${CYAN}--- Running Codegen Tests ---${NC}"
 
         for file in $files; do
-                test_name=$(basename "$file" .pn)
-                echo -e "${GREEN}Testing: $test_name.pn${NC}"
+                test_name=$(basename "$file")
+                test_name=${test_name%.quil}
+                test_name=${test_name%.qil}
+                echo -e "${GREEN}Testing: $test_name${NC} ($(basename "$file"))"
 
                 # each test gets its own output dir under the gitignored payload/
                 test_dir="payload/$test_name"
                 mkdir -p "$test_dir"
 
                 if [ "$use_valgrind" = "y" ]; then
-                        valgrind --leak-check=full --show-leak-kinds=all ./bin/pinum -oc "$test_dir/test result" "$file"
+                        valgrind --leak-check=full --show-leak-kinds=all ./bin/quil -oc "$test_dir/test result" "$file"
                 else
-                        ./bin/pinum -oc "$test_dir/test result" "$file"
+                        ./bin/quil -oc "$test_dir/test result" "$file"
                 fi
 
                 if [ $? -eq 0 ]; then
@@ -217,7 +219,7 @@ run_codegen_tests() {
 }
 
 # --- Runtime Testing Function ---
-# transpiles + compiles each .pn, runs the binary, and asserts:
+# transpiles + compiles each .quil, runs the binary, and asserts:
 #   - `panic_*` files exit non-zero with "index out of bounds" on stderr
 #   - every other file runs and exits cleanly
 # Arguments:
@@ -232,7 +234,7 @@ run_runtime_tests() {
                 return
         fi
 
-        files=$(ls "$dir"/*.pn 2>/dev/null)
+        files=$(ls "$dir"/*.quil "$dir"/*.qil 2>/dev/null)
         if [ -z "$files" ]; then
                 echo -e "${YELLOW}No tests found in $dir.${NC}"
                 return
@@ -252,9 +254,9 @@ run_runtime_tests() {
                 mkdir -p "$test_dir"
 
                 if [ "$use_valgrind" = "y" ]; then
-                        valgrind --leak-check=full --show-leak-kinds=all ./bin/pinum -oc "$test_dir/test result" "$file" >/dev/null
+                        valgrind --leak-check=full --show-leak-kinds=all ./bin/quil -oc "$test_dir/test result" "$file" >/dev/null
                 else
-                        ./bin/pinum -oc "$test_dir/test result" "$file" >/dev/null 2>&1
+                        ./bin/quil -oc "$test_dir/test result" "$file" >/dev/null 2>&1
                 fi
                 if [ $? -ne 0 ]; then
                         echo -e "${RED}Result: FAIL (transpile failed)${NC}"
@@ -303,7 +305,7 @@ cat <<'EOF'
                                                        |___/
 EOF
 echo -e "${NC}"
-echo -e "${YELLOW}PiNum-Lang Test Runner${NC}"
+echo -e "${YELLOW}quil Test Runner${NC}"
 echo "======================"
 echo ""
 

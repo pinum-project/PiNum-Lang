@@ -1,25 +1,12 @@
-/********************************************************************
- *   _____ _ _   _                       _                          *
- *  |  __ (_) \ | |                     | |                         *
- *  | |__) ||  \| |_   _ _ __ ___ ______| |     __ _ _ __   __ _    *
- *  |  ___/ | . ` | | | | '_ ` _ \______| |    / _` | '_ \ / _` |   *
- *  | |   | | |\  | |_| | | | | | |     | |___| (_| | | | | (_| |   *
- *  |_|   | |_| \_|\__,_|_| |_| |_|     |______\__,_|_| |_|\__, |   *
- *                                                          __/ |   *
- *                                                         |___/    *
- *                                                                  *
- *  Copyright (c) 2026 tanvir-techbro.                              *
- *  You may opt to use, copy, modify, merge, publish, distribute    *
- *  and/or sell copies of the Software, and permit persons to whom  *
- *  the Software is furnished to do so, under the conditions of the *
- *  LICENSE.                                                        *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, *
- *  EXPRESS OR IMPLIED.                                             *
- *                                                                  *
- *  If you find any bug you would be highly encouraged to create a  *
- *  github issue at <https://github.com/pinum-project/PiNum-Lang>   *
- *  or contact <surjointelligence.team@gmail.com>                   *
- ********************************************************************/
+/**************************************************
+ * QUIL - Quick Unified Iterative Language
+ * Language and Compiler toolchain, Frontend
+ *
+ * Copyright (c) 2026-present quil-project authors.
+ * Licensed under the terms of the LICENSE file.
+ *
+ * Issues: <https://github.com/quil-project/quil>
+ *************************************************/
 
 /* Semaintic Analysis + Symbol table */
 
@@ -39,7 +26,7 @@ static void sem_push_scope(SemAnalyzer *a) {
                 a->frame_capacity = a->frame_capacity ? a->frame_capacity * 2 : 8;
                 HashMap **tmp = realloc(a->frames, a->frame_capacity * sizeof(HashMap *));
                 if (!tmp) {
-                        pinum_error(STAGE_INTERNAL, ERR_ALLOC_FAILED, NULL);
+                        quil_error(STAGE_INTERNAL, ERR_ALLOC_FAILED, NULL);
                 }
                 a->frames = tmp;
         }
@@ -61,7 +48,7 @@ static void sem_declare(SemAnalyzer *a, const char *name, const char *type, int 
         if (!hashmap_insert(frame, k, v)) {
                 free(k);
                 free(v);
-                pinum_error_at(STAGE_SEMANTIC, ERR_REDECLARED_VAR, line, col, name);
+                quil_error_at(STAGE_SEMANTIC, ERR_REDECLARED_VAR, line, col, name);
         }
 }
 static const char *sem_resolve(SemAnalyzer *a, const char *name) {
@@ -121,7 +108,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                         // executables must live inside 'fn main()'
                         if (stmt->type != NODE_FUNC_DEF && stmt->type != NODE_VAR_DECL &&
                             stmt->type != NODE_IMPORT && stmt->type != NODE_DIRECTIVE) {
-                                pinum_error_at(STAGE_SEMANTIC, ERR_TOP_LEVEL_STMT, stmt->line, stmt->col, NULL);
+                                quil_error_at(STAGE_SEMANTIC, ERR_TOP_LEVEL_STMT, stmt->line, stmt->col, NULL);
                         }
                         sem_analyze_node(a, stmt);
                 }
@@ -152,7 +139,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
         case NODE_IDENTIFIER: {
                 const char *type = sem_resolve(a, node->data.identifier.name);
                 if (!type) {
-                        pinum_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.identifier.name);
+                        quil_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.identifier.name);
                 }
                 node->resolved_type = strdup(type);
                 break;
@@ -160,7 +147,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
         case NODE_ARRAY_ACCESS: {
                 const char *type = sem_resolve(a, node->data.array_access.name);
                 if (!type) {
-                        pinum_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.array_access.name);
+                        quil_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.array_access.name);
                 }
                 if (strncmp(type, "vec_", 4) == 0) {
                         const char *elem = type + 4; // int, float, string...
@@ -178,7 +165,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                 if (node->data.member_access.arg_count > 0) {
                         // method call: validate the method against the shared table
                         if (!obj_type || !method_lookup(obj_type, node->data.member_access.member)) {
-                                pinum_error_at(STAGE_SEMANTIC, ERR_UNKNOWN, node->line, node->col, node->data.member_access.member);
+                                quil_error_at(STAGE_SEMANTIC, ERR_UNKNOWN, node->line, node->col, node->data.member_access.member);
                         }
                 }
                 for (int i = 0; i < node->data.member_access.arg_count; i++) {
@@ -222,12 +209,12 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
         case NODE_ASSIGN: {
                 const char *type = sem_resolve(a, node->data.assign.name);
                 if (!type) {
-                        pinum_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.assign.name);
+                        quil_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.assign.name);
                 }
                 if (node->data.assign.index) {
                         // arr[idx] = v — validate the array and analyze the index
                         if (strncmp(type, "vec_", 4) != 0) {
-                                pinum_error_at(STAGE_SEMANTIC, ERR_UNKNOWN, node->line, node->col, node->data.assign.name);
+                                quil_error_at(STAGE_SEMANTIC, ERR_UNKNOWN, node->line, node->col, node->data.assign.name);
                         }
                         sem_analyze_node(a, node->data.assign.index);
                 }
@@ -269,7 +256,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
         case NODE_READ: {
                 const char *type = sem_resolve(a, node->data.read.name);
                 if (!type) {
-                        pinum_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.read.name);
+                        quil_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.read.name);
                 }
                 node->resolved_type = strdup(type);
                 break;
@@ -304,7 +291,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                 if (!hashmap_insert(a->functions, strdup(node->data.func_def.name), fs)) {
                         // duplicate function name
                         funcSig_free(fs);
-                        pinum_error_at(STAGE_SEMANTIC, ERR_DUPLICATED_FUNC, node->line, node->col, node->data.func_def.name);
+                        quil_error_at(STAGE_SEMANTIC, ERR_DUPLICATED_FUNC, node->line, node->col, node->data.func_def.name);
                 }
 
                 // make params visible inside the function, in the function's OWN scope
@@ -332,7 +319,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                                          node->data.func_call.name,
                                          (int)fs->param_count,
                                          (int)node->data.func_call.arg_count);
-                                pinum_error_at(STAGE_SEMANTIC, ERR_ARG_COUNT, node->line, node->col, message);
+                                quil_error_at(STAGE_SEMANTIC, ERR_ARG_COUNT, node->line, node->col, message);
                                 // optional later: compare each arg->resolved_type to s->param_types[i]
                         }
                 }
@@ -357,7 +344,7 @@ void semantic_analyze(ASTnode *program) {
         bool found = false;
         hashmap_get(a.functions, "main", &found); // note: 'a' is a value here → a.functions
         if (!found) {
-                pinum_error_at(STAGE_SEMANTIC, ERR_NO_MAIN, program->line, program->col, NULL);
+                quil_error_at(STAGE_SEMANTIC, ERR_NO_MAIN, program->line, program->col, NULL);
         }
 
         hashmap_free(a.functions);

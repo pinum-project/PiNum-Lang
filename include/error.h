@@ -1,25 +1,12 @@
-/********************************************************************
- *   _____ _ _   _                       _                          *
- *  |  __ (_) \ | |                     | |                         *
- *  | |__) ||  \| |_   _ _ __ ___ ______| |     __ _ _ __   __ _    *
- *  |  ___/ | . ` | | | | '_ ` _ \______| |    / _` | '_ \ / _` |   *
- *  | |   | | |\  | |_| | | | | | |     | |___| (_| | | | | (_| |   *
- *  |_|   | |_| \_|\__,_|_| |_| |_|     |______\__,_|_| |_|\__, |   *
- *                                                          __/ |   *
- *                                                         |___/    *
- *                                                                  *
- *  Copyright (c) 2026 tanvir-techbro.                              *
- *  You may opt to use, copy, modify, merge, publish, distribute    *
- *  and/or sell copies of the Software, and permit persons to whom  *
- *  the Software is furnished to do so, under the conditions of the *
- *  LICENSE.                                                        *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, *
- *  EXPRESS OR IMPLIED.                                             *
- *                                                                  *
- *  If you find any bug you would be highly encouraged to create a  *
- *  github issue at <https://github.com/pinum-project/PiNum-Lang>   *
- *  or contact <surjointelligence.team@gmail.com>                   *
- ********************************************************************/
+/**************************************************
+ * QUIL - Quick Unified Iterative Language
+ * Language and Compiler toolchain, Frontend
+ *
+ * Copyright (c) 2026-present quil-project authors.
+ * Licensed under the terms of the LICENSE file.
+ *
+ * Issues: <https://github.com/quil-project/quil>
+ *************************************************/
 
 #ifndef ERROR_H
 #define ERROR_H
@@ -69,7 +56,7 @@ typedef enum {
         // File / CLI errors
         ERR_NO_INPUT_FILE,     // no input file provided
         ERR_INVALID_FLAG,      // unrecognized flag
-        ERR_INVALID_FILE_TYPE, // not a .pn file
+        ERR_INVALID_FILE_TYPE, // not a .quil/.qil file
         ERR_CANNOT_OPEN_FILE,  // failed to open the input file
         ERR_NO_OUTPUT_FILE,    // -o/-oc flag without an output name
         ERR_NO_COMPILER,       // no C compiler found
@@ -122,15 +109,15 @@ void error_set_source_file(const char *filename);
  * @param code The error code describing the problem.
  * @param detail Extra information (like a token value), may be NULL.
  */
-noreturn void pinum_error(ErrorStage stage, ErrorCode code, const char *detail);
+noreturn void quil_error(ErrorStage stage, ErrorCode code, const char *detail);
 
 /*
- * @brief Same as pinum_error but includes the source location.
+ * @brief Same as quil_error but includes the source location.
  *
  * @param line 1-based line of the error (0 = no location).
  * @param col 1-based column of the error (0 = no location).
  */
-noreturn void pinum_error_at(ErrorStage stage, ErrorCode code, int line, int col, const char *detail);
+noreturn void quil_error_at(ErrorStage stage, ErrorCode code, int line, int col, const char *detail);
 
 /*
  * @brief Reports an "expected X but found Y" error and exits.
@@ -141,15 +128,15 @@ noreturn void pinum_error_at(ErrorStage stage, ErrorCode code, int line, int col
  * @param expected Description of what was expected (e.g. "')'").
  * @param found The token value that was found instead, may be NULL.
  */
-noreturn void pinum_expected(ErrorStage stage, const char *expected, const char *found);
+noreturn void quil_expected(ErrorStage stage, const char *expected, const char *found);
 
 /*
- * @brief Same as pinum_expected but includes the source location.
+ * @brief Same as quil_expected but includes the source location.
  *
  * @param line 1-based line of the error (0 = no location).
  * @param col 1-based column of the error (0 = no location).
  */
-noreturn void pinum_expected_at(ErrorStage stage, int line, int col, const char *expected, const char *found);
+noreturn void quil_expected_at(ErrorStage stage, int line, int col, const char *expected, const char *found);
 
 /*
  * @brief Reports a warning (yellow) in the standard format.
@@ -160,6 +147,6 @@ noreturn void pinum_expected_at(ErrorStage stage, int line, int col, const char 
  * @param code The warning code describing the problem.
  * @param detail Extra information, may be NULL.
  */
-void pinum_warning(ErrorStage stage, WarningCode code, const char *detail);
+void quil_warning(ErrorStage stage, WarningCode code, const char *detail);
 
 #endif

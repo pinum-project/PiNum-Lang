@@ -1,25 +1,12 @@
-#******************************************************************#
-#   _____ _ _   _                       _                          #
-#  |  __ (_) \ | |                     | |                         #
-#  | |__) ||  \| |_   _ _ __ ___ ______| |     __ _ _ __   __ _    #
-#  |  ___/ | . ` | | | | '_ ` _ \______| |    / _` | '_ \ / _` |   #
-#  | |   | | |\  | |_| | | | | | |     | |___| (_| | | | | (_| |   #
-#  |_|   | |_| \_|\__,_|_| |_| |_|     |______\__,_|_| |_|\__, |   #
-#                                                          __/ |   #
-#                                                         |___/    #
-#                                                                  #
-#  Copyright (c) 2026 tanvir-techbro.                              #
-#  You may opt to use, copy, modify, merge, publish, distribute    #
-#  and/or sell copies of the Software, and permit persons to whom  #
-#  the Software is furnished to do so, under the conditions of the #
-#  LICENSE.                                                        #
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, #
-#  EXPRESS OR IMPLIED.                                             #
-#                                                                  #
-#  If you find any bug you would be highly encouraged to create a  #
-#  github issue at <https://github.com/pinum-project/PiNum-Lang>   #
-#  or contact <surjointelligence.team@gmail.com>                   #
-#******************************************************************#
+#*************************************************
+# QUIL - Quick Unified Iterative Language
+# Language and Compiler toolchain, Frontend
+#
+# Copyright (c) 2026-present quil-project authors.
+# Licensed under the terms of the LICENSE file.
+#
+# Issues: <https://github.com/quil-project/quil>
+#*************************************************
 
 # Variables
 CC ?= $CC
@@ -29,14 +16,14 @@ SRC = src/main.c src/cli.c src/lexer.c src/lexer_filter.c src/parser.c src/metho
       src/ast.c src/codegen_c.c src/helper.c src/error.c src/_hashmap.c src/sema.c
 VERSION = $(shell cat VERSION)
 
-# WASI build (playground pinum.wasm). Point WASI_SDK at your wasi-sdk install, e.g.:
+# WASI build (playground quil.wasm). Point WASI_SDK at your wasi-sdk install, e.g.:
 #   make wasm WASI_SDK=/home/user/wasi-sdk-25
 WASI_SDK ?= /opt/wasi-sdk
 WASI_CC ?= $(WASI_SDK)/bin/clang
-WASM_TARGET = pinum.wasm
+WASM_TARGET = quil.wasm
 WASMFLAGS += --target=wasm32-wasi -O2 -I include
 
-TARGET = bin/pinum
+TARGET = bin/quil
 MKDIR = mkdir -p bin
 RM = rm -f
 
@@ -50,7 +37,7 @@ endif
 # The default rule
 all: $(TARGET)
 
-# Compile it to PiNum-Lang/bin/ directory
+# Compile it to quil/bin/ directory
 $(TARGET): $(SRC)
 	@$(MKDIR)
 	$(CC) $(DCFLAGS) $(SRC) -o $(TARGET)
@@ -67,9 +54,9 @@ wasm: $(SRC)
 # VS Code extension (init the extras/vscode submodule, falling back to a plain clone)
 vscode:
 	@git submodule update --init --depth 1 extras/vscode 2>/dev/null || \
-		git clone --depth 1 https://github.com/pinum-project/pinum-vscode.git extras/vscode
+		git clone --depth 1 https://github.com/quil-project/quil-vscode.git extras/vscode
 
-# Pinum compiler backend (QBE fork) — pull the latest version, then build the qbe binary
+# Quil compiler backend (QBE fork) — pull the latest version, then build the qbe binary
 pncb:
 	@git submodule update --init --remote pncb
 	$(MAKE) -C pncb qbe

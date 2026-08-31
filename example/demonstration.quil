@@ -1,10 +1,10 @@
-fn square(int32 n) : int32 {
+fn square(int32 n): int32 {
         return n * n
 }
 fn greet() {
         println("Hello from a function!")
 }
-fn factorial(int32 n) : int32 {
+fn factorial(int32 n): int32 {
         if (n <= 1) {
                 return 1
         }
@@ -12,7 +12,7 @@ fn factorial(int32 n) : int32 {
 }
 
 fn main() {
-# PiNum-Lang feature demonstration
+# quil feature demonstration
 # Literally every feature of the language lives in this one file.
 
 # Semicolons are OPTIONAL — a newline ends a statement.
@@ -24,7 +24,7 @@ int32 count = 10;
 float32 ratio = 2.5
 float64 pi = 3.14159
 char letter = 'P'
-string name = "PiNum"
+string name = "Quil"
 bool ready = true
 println("count  = ", count)
 println("ratio  = ", ratio)
@@ -76,7 +76,7 @@ while (row < 5) {
 
 # --- string addition (provided by the runtime library) ---
 # "a" + "b" concatenates the two strings, returns a new string
-string first = "PiNum"
+string first = "Quil"
 string last = "-Lang"
 println(first + last)
 println("Hello, " + name + "!")
@@ -172,7 +172,7 @@ for (int32 down = 5; down > 0; down--) {
 
 # --- for (range) sugar ---
 # for (N) runs the body N times: expands to
-#   for (int32 __pinum_i0 = 0; __pinum_i0 < N; __pinum_i0++)
+#   for (int32 __quil_i0 = 0; __quil_i0 < N; __quil_i0++)
 for (5) {
         println("beep")
 }
@@ -196,7 +196,7 @@ vec<int32> nums = [3, 5, 6]
 println("nums = ", nums)
 vec<float32> ratios = [1.5, 2.5]
 println("ratios = ", ratios)
-vec<string> words = ["PiNum", "rocks"]
+vec<string> words = ["Quil", "rocks"]
 println("words = ", words)
 vec<int32> empty = []
 println("empty = ", empty)
@@ -213,7 +213,7 @@ println("nums[1] now = ", nums[1])
 
 # --- functions ---
 # define with: fn name(params): returnType { ... }
-# the ': returnType' part is optional; omit it for a void function.
+# the ': returnType' part is optional; omit it for a function that returns nothing.
 # recursion
 
 int32 s = square(9)

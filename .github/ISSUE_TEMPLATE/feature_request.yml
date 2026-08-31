@@ -1,5 +1,5 @@
 name: Feature Request
-description: Suggest a new feature or improvement for PiNum-Lang
+description: Suggest a new feature or improvement for quil
 title: "feat: "
 labels: ["enhancement"]
 body:
@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for proposing a feature! Before submitting:
-        - Search [existing issues](https://github.com/pinum-project/PiNum-Lang/issues) and the [README](https://github.com/pinum-project/PiNum-Lang) to see if it's already planned.
+        - Search [existing issues](https://github.com/quil-project/quil/issues) and the [README](https://github.com/quil-project/quil) to see if it's already planned.
         - Check the "Development Status" section in the README for work in progress.
 
   - type: textarea
@@ -26,7 +26,7 @@ body:
       label: Proposed Solution
       description: Describe the feature and how it should behave. Include syntax examples if applicable.
       placeholder: |
-        ```pinum
+        ```quil
         for (int i = 0; i < 10; i = i + 1) {
                 print(i, "\n")
         }

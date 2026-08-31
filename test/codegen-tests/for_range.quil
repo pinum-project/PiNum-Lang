@@ -1,5 +1,5 @@
 fn main() {
-# Codegen: for (RANGE) sugar  →  for (int32 __pinum_iN = 0; __pinum_iN < RANGE; __pinum_iN++)
+# Codegen: for (RANGE) sugar  →  for (int32 __quil_iN = 0; __quil_iN < RANGE; __quil_iN++)
 # 1. all four for-loop forms still compile
 for (5) {
     print("R");

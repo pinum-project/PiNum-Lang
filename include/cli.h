@@ -1,25 +1,12 @@
-/********************************************************************
- *   _____ _ _   _                       _                          *
- *  |  __ (_) \ | |                     | |                         *
- *  | |__) ||  \| |_   _ _ __ ___ ______| |     __ _ _ __   __ _    *
- *  |  ___/ | . ` | | | | '_ ` _ \______| |    / _` | '_ \ / _` |   *
- *  | |   | | |\  | |_| | | | | | |     | |___| (_| | | | | (_| |   *
- *  |_|   | |_| \_|\__,_|_| |_| |_|     |______\__,_|_| |_|\__, |   *
- *                                                          __/ |   *
- *                                                         |___/    *
- *                                                                  *
- *  Copyright (c) 2026 tanvir-techbro.                              *
- *  You may opt to use, copy, modify, merge, publish, distribute    *
- *  and/or sell copies of the Software, and permit persons to whom  *
- *  the Software is furnished to do so, under the conditions of the *
- *  LICENSE.                                                        *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, *
- *  EXPRESS OR IMPLIED.                                             *
- *                                                                  *
- *  If you find any bug you would be highly encouraged to create a  *
- *  github issue at <https://github.com/pinum-project/PiNum-Lang>   *
- *  or contact <surjointelligence.team@gmail.com>                   *
- ********************************************************************/
+/**************************************************
+ * QUIL - Quick Unified Iterative Language
+ * Language and Compiler toolchain, Frontend
+ *
+ * Copyright (c) 2026-present quil-project authors.
+ * Licensed under the terms of the LICENSE file.
+ *
+ * Issues: <https://github.com/quil-project/quil>
+ *************************************************/
 
 #ifndef CLI_H
 #define CLI_H
@@ -31,10 +18,10 @@
  * @brief What the user asked for, once the flags have been parsed.
  */
 typedef enum {
-        CLI_ACTION_RUN,     // compile a .pn file
+        CLI_ACTION_RUN,     // compile a .quil/.qil file
         CLI_ACTION_HELP,    // print the usage text
         CLI_ACTION_VERSION, // print the version
-        CLI_ACTION_REPAIR,  // reinstall the .pinum-lang directory
+        CLI_ACTION_REPAIR,  // reinstall the .quil-lang directory
         CLI_ACTION_UPDATE   // run the self-updater
 } cli_action;
 
@@ -55,7 +42,7 @@ typedef enum {
  */
 typedef struct {
         cli_action action;    // what to do
-        const char *filename; // .pn file to compile (CLI_ACTION_RUN only)
+        const char *filename; // .quil/.qil file to compile (CLI_ACTION_RUN only)
         char *out_name;       // value from -o/-oc, NULL if not given
         cli_out_mode out_mode;
         bool debug_lexer;

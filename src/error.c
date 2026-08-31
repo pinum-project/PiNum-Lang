@@ -1,25 +1,12 @@
-/********************************************************************
- *   _____ _ _   _                       _                          *
- *  |  __ (_) \ | |                     | |                         *
- *  | |__) ||  \| |_   _ _ __ ___ ______| |     __ _ _ __   __ _    *
- *  |  ___/ | . ` | | | | '_ ` _ \______| |    / _` | '_ \ / _` |   *
- *  | |   | | |\  | |_| | | | | | |     | |___| (_| | | | | (_| |   *
- *  |_|   | |_| \_|\__,_|_| |_| |_|     |______\__,_|_| |_|\__, |   *
- *                                                          __/ |   *
- *                                                         |___/    *
- *                                                                  *
- *  Copyright (c) 2026 tanvir-techbro.                              *
- *  You may opt to use, copy, modify, merge, publish, distribute    *
- *  and/or sell copies of the Software, and permit persons to whom  *
- *  the Software is furnished to do so, under the conditions of the *
- *  LICENSE.                                                        *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, *
- *  EXPRESS OR IMPLIED.                                             *
- *                                                                  *
- *  If you find any bug you would be highly encouraged to create a  *
- *  github issue at <https://github.com/pinum-project/PiNum-Lang>   *
- *  or contact <surjointelligence.team@gmail.com>                   *
- ********************************************************************/
+/**************************************************
+ * QUIL - Quick Unified Iterative Language
+ * Language and Compiler toolchain, Frontend
+ *
+ * Copyright (c) 2026-present quil-project authors.
+ * Licensed under the terms of the LICENSE file.
+ *
+ * Issues: <https://github.com/quil-project/quil>
+ *************************************************/
 
 #include "../include/error.h"
 #include <unistd.h> // for _exit
@@ -59,9 +46,9 @@ static const char *stage_name(ErrorStage stage) {
         }
 }
 
-// prints the shared prefix: "pinum: <stage>: error:" / "pinum: <stage>: warning:"
+// prints the shared prefix: "quil: <stage>: error:" / "quil: <stage>: warning:"
 static void print_prefix(ErrorStage stage, const char *color, const char *kind) {
-        fprintf(stderr, ANSI_BOLD "pinum:" ANSI_RESET " ");
+        fprintf(stderr, ANSI_BOLD "quil:" ANSI_RESET " ");
         fprintf(stderr, "%s%s: %s:" ANSI_RESET " ", color, stage_name(stage), kind);
 }
 
@@ -172,7 +159,7 @@ static void print_error_message(ErrorStage stage, ErrorCode code, int line, int 
                 fprintf(stderr, "invalid flag '%s'", d);
                 break;
         case ERR_INVALID_FILE_TYPE:
-                fprintf(stderr, "file type not valid (expected '.pn')");
+                fprintf(stderr, "file type not valid (expected '.quil' or '.qil')");
                 break;
         case ERR_CANNOT_OPEN_FILE:
                 fprintf(stderr, "could not open file '%s'", d);
@@ -187,7 +174,7 @@ static void print_error_message(ErrorStage stage, ErrorCode code, int line, int 
                 fprintf(stderr, "C compiler failed on '%s'", d);
                 break;
         case ERR_RUNTIME_MISSING:
-                fprintf(stderr, "runtime not found at '%s' - run 'pinum --repair' (or 'pinum -r') to restore it", d);
+                fprintf(stderr, "runtime not found at '%s' - run 'quil --repair' (or 'quil -r') to restore it", d);
                 break;
         case ERR_UPDATE_START:
                 fprintf(stderr, "could not start the update check");
@@ -223,18 +210,18 @@ static void print_error_message(ErrorStage stage, ErrorCode code, int line, int 
         }
 }
 
-noreturn void pinum_error_at(ErrorStage stage, ErrorCode code, int line, int col, const char *detail) {
+noreturn void quil_error_at(ErrorStage stage, ErrorCode code, int line, int col, const char *detail) {
         print_error_message(stage, code, line, col, detail);
         fprintf(stderr, "\n");
         print_caret(line, col);
         _exit(EXIT_FAILURE);
 }
 
-noreturn void pinum_error(ErrorStage stage, ErrorCode code, const char *detail) {
-        pinum_error_at(stage, code, 0, 0, detail);
+noreturn void quil_error(ErrorStage stage, ErrorCode code, const char *detail) {
+        quil_error_at(stage, code, 0, 0, detail);
 }
 
-noreturn void pinum_expected_at(ErrorStage stage, int line, int col, const char *expected, const char *found) {
+noreturn void quil_expected_at(ErrorStage stage, int line, int col, const char *expected, const char *found) {
         const char *f = found ? found : "unknown";
 
         print_prefix(stage, ANSI_RED, "error");
@@ -244,11 +231,11 @@ noreturn void pinum_expected_at(ErrorStage stage, int line, int col, const char 
         _exit(EXIT_FAILURE);
 }
 
-noreturn void pinum_expected(ErrorStage stage, const char *expected, const char *found) {
-        pinum_expected_at(stage, 0, 0, expected, found);
+noreturn void quil_expected(ErrorStage stage, const char *expected, const char *found) {
+        quil_expected_at(stage, 0, 0, expected, found);
 }
 
-void pinum_warning(ErrorStage stage, WarningCode code, const char *detail) {
+void quil_warning(ErrorStage stage, WarningCode code, const char *detail) {
         const char *d = detail ? detail : "unknown";
 
         print_prefix(stage, ANSI_YELLOW, "warning");

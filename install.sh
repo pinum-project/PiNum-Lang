@@ -1,30 +1,17 @@
 #!/bin/bash
 
-#******************************************************************#
-#   _____ _ _   _                       _                          #
-#  |  __ (_) \ | |                     | |                         #
-#  | |__) ||  \| |_   _ _ __ ___ ______| |     __ _ _ __   __ _    #
-#  |  ___/ | . ` | | | | '_ ` _ \______| |    / _` | '_ \ / _` |   #
-#  | |   | | |\  | |_| | | | | | |     | |___| (_| | | | | (_| |   #
-#  |_|   | |_| \_|\__,_|_| |_| |_|     |______\__,_|_| |_|\__, |   #
-#                                                          __/ |   #
-#                                                         |___/    #
-#                                                                  #
-#  Copyright (c) 2026 tanvir-techbro.                              #
-#  You may opt to use, copy, modify, merge, publish, distribute    #
-#  and/or sell copies of the Software, and permit persons to whom  #
-#  the Software is furnished to do so, under the conditions of the #
-#  LICENSE.                                                        #
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, #
-#  EXPRESS OR IMPLIED.                                             #
-#                                                                  #
-#  If you find any bug you would be highly encouraged to create a  #
-#  github issue at <https://github.com/pinum-project/PiNum-Lang>   #
-#  or contact <surjointelligence.team@gmail.com>                   #
-#******************************************************************#
+#*************************************************
+# QUIL - Quick Unified Iterative Language
+# Language and Compiler toolchain, Frontend
+#
+# Copyright (c) 2026-present quil-project authors.
+# Licensed under the terms of the LICENSE file.
+#
+# Issues: <https://github.com/quil-project/quil>
+#*************************************************
 
-# PiNum-Lang Installation Script
-# This script builds and installs PiNum-Lang locally.
+# quil Installation Script
+# This script builds and installs quil locally.
 # Requirements:
 # - C Compiler (GCC 4.8+, Clang 3.5+, or any C99+ compliant compiler)
 # - Make
@@ -32,8 +19,8 @@
 
 set -e
 
-REPO_URL="https://github.com/pinum-project/PiNum-Lang"
-INSTALL_DIR="$HOME/.pinum-lang"
+REPO_URL="https://github.com/quil-project/quil"
+INSTALL_DIR="$HOME/.quil-lang"
 
 # 1. Check for dependencies
 echo "Checking for a C compiler and Make..."
@@ -67,7 +54,7 @@ if [ -d "$INSTALL_DIR" ]; then
         git reset --hard origin/main
 else
         echo "-----------------------------"
-        echo "   Installing PiNum-Lang...  "
+        echo "   Installing quil...  "
         echo "-----------------------------"
         echo ""
         echo "Cloning repository to $INSTALL_DIR..."
@@ -76,7 +63,7 @@ else
 fi
 
 # 3. Build
-echo "Building PiNum..."
+echo "Building Quil..."
 make release -s CC=$CC_BIN >/dev/null
 
 # 4. Install
@@ -96,7 +83,7 @@ if [ -d "$HOME/.config/nvim" ] || [ -d "$HOME/.local/share/nvim" ]; then
         echo ""
         echo "Neovim detected!"
         # When piped from curl, stdin is the pipe. We need to read from the terminal (/dev/tty).
-        read -p "Do you want to activate PiNum syntax highlighting for Neovim? (y/n): " -n 1 -r </dev/tty
+        read -p "Do you want to activate Quil syntax highlighting for Neovim? (y/n): " -n 1 -r </dev/tty
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
                 echo "Activating Neovim syntax..."
@@ -107,27 +94,27 @@ fi
 # 6. VS Code Extension (Optional)
 # the extension lives in the extras/vscode submodule; a shallow clone of the
 # repo does not fetch submodules, so pull it in before looking for the .vsix
-if [ ! -f extras/vscode/pinum-lang-*.vsix ]; then
+if [ ! -f extras/vscode/quil-lang-*.vsix ]; then
         echo "Fetching the VS Code extension..."
         git submodule update --init --depth 1 extras/vscode 2>/dev/null ||
-                git clone --depth 1 https://github.com/pinum-project/pinum-vscode.git extras/vscode 2>/dev/null || true
+                git clone --depth 1 https://github.com/quil-project/quil-vscode.git extras/vscode 2>/dev/null || true
 fi
 echo ""
-echo "PiNum has a VS Code extension for syntax highlighting."
+echo "Quil has a VS Code extension for syntax highlighting."
 echo "It is recommended if you use VS Code (or Codium)."
 read -p "Do you want to install it? (y/n): " -n 1 -r </dev/tty
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-        VSIX_FILE=$(ls extras/vscode/pinum-lang-*.vsix 2>/dev/null | head -n 1)
+        VSIX_FILE=$(ls extras/vscode/quil-lang-*.vsix 2>/dev/null | head -n 1)
         if command -v code &>/dev/null; then
-                echo "Installing PiNum VS Code extension..."
+                echo "Installing Quil VS Code extension..."
                 code --install-extension "$VSIX_FILE"
         elif command -v codium &>/dev/null; then
-                echo "Installing PiNum VS Code extension for Codium..."
+                echo "Installing Quil VS Code extension for Codium..."
                 codium --install-extension "$VSIX_FILE"
         else
                 echo "VS Code was not found on your system."
-                echo "Install it, then run inside vscode: code --install-extension ~/.pinum-lang/extras/vscode/pinum-lang-*.vsix"
+                echo "Install it, then run inside vscode: code --install-extension ~/.quil-lang/extras/vscode/quil-lang-*.vsix"
                 echo "Or grab the .vsix from the GitHub releases page."
         fi
 fi
@@ -137,6 +124,6 @@ rm -rf src include example .github payload test bin .gitignore .clang-format Mak
 
 echo ""
 echo "----------------------------------"
-echo "Successfully installed PiNum-Lang!"
-echo "Try running: pinum"
+echo "Successfully installed quil!"
+echo "Try running: quil"
 echo "----------------------------------"
