@@ -545,7 +545,6 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
 
 // --- MAIN ---
 void codegen_c(ASTnode *program, FILE *output) {
-#ifndef __wasm__
         char *home_dir = getenv("HOME");
         char path[1024];
         snprintf(path, sizeof(path), "%s/.quil-lang/runtime/quil_runtime.h", home_dir);
@@ -556,11 +555,6 @@ void codegen_c(ASTnode *program, FILE *output) {
         }
 
         fprintf(output, "#include \"%s/.quil-lang/runtime/quil_runtime.h\"\n", home_dir);
-#else
-        fprintf(output, "#include \"quil_runtime.h\"\n");
-        fprintf(output, "#include \"quil_rtvec.h\"\n");
-        fprintf(output, "#include \"quil_rtstrchr.h\"\n");
-#endif
         // emit every top-level declaration at file scope
         for (int i = 0; i < program->data.program.count; i++) {
                 ASTnode *stmt = program->data.program.statements[i];

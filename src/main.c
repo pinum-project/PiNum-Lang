@@ -15,12 +15,13 @@
 
 #include "../include/ast.h"
 #include "../include/cli.h"
-#include "../include/codegen_c.h"
 #include "../include/error.h"
 #include "../include/lexer.h"
 #include "../include/mode.h"
 #include "../include/parser.h"
 #include "../include/sema.h"
+#include "../include/ssagen.h"
+// #include "../include/codegen_c.h" // kept for reference, excluded from pipeline (single backend: ssagen+feather)
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,20 +61,10 @@ int main(int argc, char *argv[]) {
                 return EXIT_SUCCESS;
         case CLI_ACTION_UPDATE:
                 // the update flag handles its own output and messaging
-#ifndef __wasm__
                 return cli_update();
-#else
-                fprintf(stderr, "Updating is not supported in the web version.\n");
-                return EXIT_FAILURE;
-#endif
         case CLI_ACTION_REPAIR:
                 // reinstalls the missing .quil-lang directory
-#ifndef __wasm__
                 return cli_repair();
-#else
-                fprintf(stderr, "Repairing is not supported in the web version.\n");
-                return EXIT_FAILURE;
-#endif
         case CLI_ACTION_RUN:
                 break; // fall through to the pipeline
         }
@@ -143,38 +134,45 @@ int main(int argc, char *argv[]) {
         // catches undeclared/redeclared variables before codegen
         semantic_analyze(ast);
 
-        // --- CODE GENERATION ---
-        // decide where the generated C goes based on the output mode
-        char c_buf[1024];
-        char *c_path = "a.out.c";
+        // --- CODE GENERATION (single backend: ssagen -> feather -> asm) ---
+        // codegen_c kept on disk for reference but excluded from pipeline
+        char asm_buf[1024];
+        char *asm_path = "a.out.s";
         if (opts.out_mode == CLI_OUT_C) {
-                c_path = opts.out_name;
+                asm_path = opts.out_name;
         } else if (opts.out_mode == CLI_OUT_BINARY) {
-                snprintf(c_buf, sizeof(c_buf), "%s.tmp.c", opts.out_name);
-                c_path = c_buf;
+                snprintf(asm_buf, sizeof(asm_buf), "%s.tmp.s", opts.out_name);
+                asm_path = asm_buf;
         } else if (opts.out_mode == CLI_OUT_BOTH) {
-                snprintf(c_buf, sizeof(c_buf), "%s.c", opts.out_name);
-                c_path = c_buf;
+                snprintf(asm_buf, sizeof(asm_buf), "%s.s", opts.out_name);
+                asm_path = asm_buf;
+        } else if (opts.out_mode == CLI_OUT_AOUT) {
+                asm_path = "a.out.tmp.s";
         }
-        FILE *output = fopen(c_path, "w");
+        Fn *fn = ssagen_build(ast);
+        FILE *asm_out = fopen(asm_path, "w");
+        if (asm_out == NULL) {
+                quil_error(STAGE_CODEGEN, ERR_CANNOT_OPEN_FILE, asm_path);
+        }
+        ssagen_emit_asm(fn, asm_out);
+        fclose(asm_out);
 
-        if (output == NULL) {
-                quil_error(STAGE_CODEGEN, ERR_CANNOT_OPEN_FILE, "payload.c");
-        }
-        codegen_c(ast, output);
-        fclose(output);
         free_ast_node(ast);
         // freeing the list and its tokens' values
         token_list_free(&list);
 
         const char *compiler = find_compiler();
+        // compile asm -> binary (feather emits assembly)
         if (opts.out_mode == CLI_OUT_AOUT) {
-                compile_to(compiler, c_path, opts.out_name);
+                compile_to(compiler, asm_path, opts.out_name);
+                remove(asm_path);
         } else if (opts.out_mode == CLI_OUT_BINARY) {
-                compile_to(compiler, c_path, opts.out_name);
-                remove(c_path); // delete temp .c
+                compile_to(compiler, asm_path, opts.out_name);
+                remove(asm_path); // delete temp .s
         } else if (opts.out_mode == CLI_OUT_BOTH) {
-                compile_to(compiler, c_path, opts.out_name);
+                compile_to(compiler, asm_path, opts.out_name);
+        } else if (opts.out_mode == CLI_OUT_C) {
+                // -o file.s : keep asm, no binary
         }
 
         // NOTE: 2 if statement below are and for debugging purposes.
@@ -231,7 +229,6 @@ static void compile_to(const char *compiler, const char *c_path, const char *bin
                 quil_error(STAGE_CODEGEN, ERR_NO_COMPILER, NULL);
         }
 
-#ifndef __wasm__
         char *args[6];
         args[0] = (char *)compiler;
         args[1] = "-O3";
@@ -247,8 +244,4 @@ static void compile_to(const char *compiler, const char *c_path, const char *bin
         if (run_cmd(NULL, compiler, args) != 0) {
                 quil_error(STAGE_CODEGEN, ERR_COMPILE_FAILED, c_path);
         }
-#else
-        fprintf(stderr, "Compiling to a native binary is not supported in the web version.\n");
-        quil_error(STAGE_CODEGEN, ERR_COMPILE_FAILED, c_path);
-#endif
 }

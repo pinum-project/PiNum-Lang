@@ -13,15 +13,11 @@ CC ?= $CC
 RCFLAGS += -Wall -Wextra -O3    # cflags for release make
 DCFLAGS += -Wall -Wextra -g -O3 # cflags for default make
 SRC = src/main.c src/cli.c src/lexer.c src/lexer_filter.c src/parser.c src/methods.c \
-      src/ast.c src/codegen_c.c src/helper.c src/error.c src/_hashmap.c src/sema.c
+      src/ast.c src/codegen_c.c src/helper.c src/error.c src/_hashmap.c src/sema.c src/ssagen.c
 VERSION = $(shell cat VERSION)
-
-# WASI build (playground quil.wasm). Point WASI_SDK at your wasi-sdk install, e.g.:
-#   make wasm WASI_SDK=/home/user/wasi-sdk-25
-WASI_SDK ?= /opt/wasi-sdk
-WASI_CC ?= $(WASI_SDK)/bin/clang
-WASM_TARGET = quil.wasm
-WASMFLAGS += --target=wasm32-wasi -O2 -I include
+BUILDDIR = build
+OBJ = $(SRC:src/%.c=$(BUILDDIR)/src/%.o)
+DEP = $(OBJ:.o=.d)
 
 TARGET = bin/quil
 MKDIR = mkdir -p bin
@@ -37,19 +33,22 @@ endif
 # The default rule
 all: $(TARGET)
 
+# Per-file objects (incremental, parallel)
+$(BUILDDIR)/src/%.o: src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(DCFLAGS) -MMD -MP -c $< -o $@
+
 # Compile it to quil/bin/ directory
-$(TARGET): $(SRC)
+$(TARGET): $(OBJ)
 	@$(MKDIR)
-	$(CC) $(DCFLAGS) $(SRC) -o $(TARGET)
+	$(CC) $(DCFLAGS) $(OBJ) -o $(TARGET)
 
 # compiling without the -g flag so it has smaller binary
-release: $(SRC)
+release: $(OBJ)
 	@$(MKDIR)
-	$(CC) $(RCFLAGS) $(SRC) -o $(TARGET)
+	$(CC) $(RCFLAGS) $(OBJ) -o $(TARGET)
 
-# in-browser WASI build (used by the site playground)
-wasm: $(SRC)
-	$(WASI_CC) $(WASMFLAGS) $(SRC) -o $(WASM_TARGET)
+-include $(DEP)
 
 # VS Code extension (init the extras/vscode submodule, falling back to a plain clone)
 vscode:
@@ -69,11 +68,11 @@ install: $(TARGET)
 
 # Rule to clean up the binary
 clean:
-	$(RM) $(TARGET) $(WASM_TARGET)
+	$(RM) -r $(BUILDDIR) $(TARGET)
 
 # Neovim syntax activation
 nvim:
 	@$(MKDIR)
 	chmod +x activate_syntax.sh && ./activate_syntax.sh
 
-.PHONY: all test clean nvim install wasm vscode feather
+.PHONY: all test clean nvim install vscode feather
