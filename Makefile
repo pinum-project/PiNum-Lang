@@ -56,10 +56,11 @@ vscode:
 	@git submodule update --init --depth 1 extras/vscode 2>/dev/null || \
 		git clone --depth 1 https://github.com/quil-project/quil-vscode.git extras/vscode
 
-# Quil compiler backend (QBE fork) — pull the latest version, then build the qbe binary
-pncb:
-	@git submodule update --init --remote pncb
-	$(MAKE) -C pncb qbe
+# Quil compiler backend (QBE fork) — pull the latest version, then build the feather binary
+feather:
+	@git submodule update --init --depth 1 feather 2>/dev/null || \
+		git clone --depth 1 https://github.com/quil-project/feather.git feather
+	$(MAKE) -C feather
 
 # To install it locally
 install: $(TARGET)
@@ -74,4 +75,4 @@ nvim:
 	@$(MKDIR)
 	chmod +x activate_syntax.sh && ./activate_syntax.sh
 
-.PHONY: all test clean nvim install wasm vscode pncb
+.PHONY: all test clean nvim install wasm vscode feather
