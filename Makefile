@@ -60,6 +60,7 @@ vscode:
 feather:
 	@git submodule update --init --depth 1 feather 2>/dev/null || \
 		git clone --depth 1 https://github.com/quil-project/feather.git feather
+	@git -C feather fetch --depth 1 origin 2>/dev/null && git -C feather reset --hard origin/main 2>/dev/null || true
 	$(MAKE) -C feather
 
 # To install it locally
