@@ -11,9 +11,13 @@
 /* .ssa code generator */
 
 #include "../include/ssagen.h"
-// keep feather private here; include only when we link feather objects
-// #include "../feather/all.h"
-// #include "../feather/config.h"
+#include "../feather/all.h"
+#include "../feather/config.h"
+
+// feather globals (normally in feather/main.c) - quil provides them when linking feather as lib
+int optlevel = 1;
+Target T;
+char debug['Z' + 1] = {0};
 
 Fn *ssagen_build(ASTnode *prog) {
         (void)prog;

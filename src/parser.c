@@ -15,7 +15,7 @@
 #include <unistd.h>
 
 // --- initialization function (main) ---
-ASTnode *parse(token_list *tokens) {
+ASTnode *quil_parse(token_list *tokens) {
         Parser parser = {tokens, 0};
         return parse_program(&parser);
 }

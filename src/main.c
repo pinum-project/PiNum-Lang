@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
         // checking program mode if ENGINE_MODE is not enabled
         if (!ENGINE_MODE) check_program_mode(&list);
 
-        ASTnode *ast = parse(&list);
+        ASTnode *ast = quil_parse(&list);
         if (opts.debug_ast) {
                 // NOTE: this function call is for debugging purposes.
                 print_ast(ast, 0);
