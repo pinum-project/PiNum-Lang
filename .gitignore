@@ -21,6 +21,7 @@ payload/*
 a.out
 a.out.c
 a.out.s
+*.tmp.s
 
 # dont ignore
 !bin/.gitkeep
