@@ -24,12 +24,24 @@ FEATHER_DEP = $(FEATHER_OBJ:.o=.d)
 FEATHER_COMM = util.o parse.o abi.o cfg.o mem.o ssa.o alias.o load.o copy.o \
 	       fold.o gvn.o gcm.o simpl.o ifopt.o live.o spill.o rega.o \
                emit.o
-FEATHER_SRC = feather/util.c feather/parse.c feather/abi.c feather/cfg.c feather/mem.c feather/ssa.c \
-	      feather/alias.c feather/load.c feather/copy.c feather/fold.c feather/gvn.c feather/gcm.c \
-	      feather/simpl.c feather/ifopt.c feather/live.c feather/spill.c feather/rega.c feather/emit.c \
-	      feather/amd64/targ.c feather/amd64/sysv.c feather/amd64/isel.c feather/amd64/emit.c feather/amd64/winabi.c \
-	      feather/arm64/targ.c feather/arm64/abi.c feather/arm64/isel.c feather/arm64/emit.c feather/rv64/targ.c \
-	      feather/rv64/abi.c feather/rv64/isel.c feather/rv64/emit.c
+# Core / Common sources
+FEATHER_CORE_SRC = feather/util.c feather/parse.c feather/abi.c feather/cfg.c feather/mem.c \
+                   feather/ssa.c feather/alias.c feather/load.c feather/copy.c feather/fold.c \
+                   feather/gvn.c feather/gcm.c feather/simpl.c feather/ifopt.c feather/live.c \
+                   feather/spill.c feather/rega.c feather/emit.c
+
+# Architecture-specific sources
+AMD64_SRC = feather/amd64/targ.c feather/amd64/sysv.c feather/amd64/isel.c \
+            feather/amd64/emit.c feather/amd64/winabi.c
+
+ARM64_SRC = feather/arm64/targ.c feather/arm64/abi.c feather/arm64/isel.c \
+            feather/arm64/emit.c
+
+RV64_SRC  = feather/rv64/targ.c feather/rv64/abi.c feather/rv64/isel.c \
+            feather/rv64/emit.c
+
+# Include all architectures into FEATHER_SRC
+FEATHER_SRC = $(FEATHER_CORE_SRC) $(AMD64_SRC) $(ARM64_SRC) $(RV64_SRC)
 FEATHER_OBJ = $(FEATHER_SRC:%.c=$(BUILDDIR)/%.o)
 
 TARGET = bin/quil
