@@ -102,6 +102,10 @@ const char *node_type_name(nodeType type) {
                 return "continue statement";
         case NODE_LIST_LITERAL:
                 return "vec literal";
+        case NODE_NAMESPACE:
+                return "namespace";
+        case NODE_QUALIFIED:
+                return "qualified path";
         default:
                 return "expression";
         }
@@ -247,6 +251,18 @@ ASTnode *make_member_access_node(ASTnode *object, char *member, ASTnode **args, 
         node->data.member_access.member = strdup(member);
         node->data.member_access.args = args;
         node->data.member_access.arg_count = arg_count;
+        return node;
+}
+ASTnode *make_namespace_node(char *name, ASTnode *body) {
+        ASTnode *node = create_ast_node(NODE_NAMESPACE);
+        node->data.namespace_decl.name = strdup(name);
+        node->data.namespace_decl.body = body;
+        return node;
+}
+ASTnode *make_qualified_node(char **segments, int count) {
+        ASTnode *node = create_ast_node(NODE_QUALIFIED);
+        node->data.qualified.segments = segments;
+        node->data.qualified.count = count;
         return node;
 }
 
@@ -461,6 +477,14 @@ void free_ast_node(ASTnode *node) {
                 }
                 free(node->data.list_literal.elements);
                 break;
+        case NODE_NAMESPACE:
+                free(node->data.namespace_decl.name);
+                free_ast_node(node->data.namespace_decl.body);
+                break;
+        case NODE_QUALIFIED:
+                for (int i = 0; i < node->data.qualified.count; i++) free(node->data.qualified.segments[i]);
+                free(node->data.qualified.segments);
+                break;
         default:
                 break;
         }
@@ -481,7 +505,7 @@ void free_ast_node(ASTnode *node) {
  * @param node The root node to start printing from.
  * @param level Current indentation level (starts at 0).
  */
-// NOTE: This function is for debugging purposes and will be commented out.
+// NOTE: This function is for debugging purposes.
 void print_ast(ASTnode *node, int level) {
         if (node == NULL)
                 return;
@@ -603,6 +627,18 @@ void print_ast(ASTnode *node, int level) {
                         printf("[%d]: ", i);
                         print_ast(node->data.list_literal.elements[i], level + 1);
                 }
+                break;
+        case NODE_NAMESPACE:
+                printf("NAMESPACE: %s\n", node->data.namespace_decl.name);
+                print_ast(node->data.namespace_decl.body, level + 1);
+                break;
+        case NODE_QUALIFIED:
+                printf("QUALIFIED: ");
+                for (int i = 0; i < node->data.qualified.count; i++) {
+                        if (i) printf("::");
+                        printf("%s", node->data.qualified.segments[i]);
+                }
+                printf("\n");
                 break;
         default:
                 printf("NODE_TYPE: %d\n", node->type);

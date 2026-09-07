@@ -12,6 +12,7 @@
 
 #include "../include/ssagen.h"
 #include "../feather/config.h"
+#include "../include/error.h"
 #include <complex.h>
 #include <stdint.h>
 #include <string.h>
@@ -26,6 +27,11 @@ extern Target T_rv64;
 Target T;
 int optlevel = 0; // no optimization by default
 char debug['Z' + 1];
+
+typedef struct {
+        ILBuilder *b;
+        HashMap *slots; /* name -> Ref SLOT */
+} Ssagen;
 
 /* --- HELPER --- */
 // enum { Kx=-1, Kw, Kl, Ks, Kd };
@@ -45,99 +51,38 @@ static int quil_to_cls(const char *t) {
         if (!strcmp(t, "float64")) return Kd;
         return Kw;
 }
-static Ref new_tmp(SsaGen *g, const int cls) {
-        return newtmp("t", cls, g->fn);
-}
-
-static int str_id = 0;
-static HashMap *str_cache;
-static Ref emit_expr(SsaGen *g, ASTnode *n) {
-        switch (n->type) {
-        // --- Literals and Identifiers ---
-        case NODE_INT_LITERAL:
-                // sema sets resolved_type "int32"/"int64", else Kw
-                return getcon(n->data.int_literal.value, g->fn);
-        case NODE_FLOAT_LITERAL: {
-                Con c = {.type = CBits, .bits.d = n->data.float_literal.value};
-                if (quil_to_cls(n->resolved_type) == Ks) {
-                        c.bits.s = (float)c.bits.d;
-                        c.flt = 1;
-                        c.bits.i = (int)c.bits.d;
-                } else {
-                        c.flt = 2; // Kd
-                }
-                return newcon(&c, g->fn);
-        }
-        case NODE_BOOL_LITERAL:
-                return getcon(n->data.bool_literal.value ? 1 : 0, g->fn);
-        case NODE_CHAR_LITERAL:
-                return getcon((int64_t)n->data.char_literal.value, g->fn);
-        case NODE_STRING_LITERAL: {
-                //
-        }
-        case NODE_IDENTIFIER:
-        case NODE_ARRAY_ACCESS:
-
-        default:
-                die("emit_expr todo %s", node_type_name(n->type));
-        }
-}
+static Ref emit_expr(Ssagen *s, ASTnode *n);
+static void emit_stmt(Ssagen *s, ASTnode *n);
 
 /* --- MAIN --- */
-Fn *ssagen_build(ASTnode *prog) {
-        (void)prog;
-        T = Deftgt; // dynamic host arch (feather/config.h)
-        // make empty fn like feather/parse.c:970-990
-        Fn *fn = alloc(sizeof(Fn));
-        memset(fn, 0, sizeof(Fn));
-        fn->ntmp = 0;
-        fn->ncon = 2;
-        fn->tmp = vnew(0, sizeof(Tmp), PFn);
-        fn->con = vnew(2, sizeof(Con), PFn);
-        for (int i = 0; i < Tmp0; i++) {
-                if (T.fpr0 <= i && i < T.fpr0 + T.nfpr) {
-                        newtmp(0, Kd, fn);
-                } else {
-                        newtmp(0, Kl, fn);
+// selects the feather codegen target and optimization level from the CLI.
+void ssagen_apply_options(const char *target, int level) {
+        optlevel = level;
+        if (target == NULL) {
+                T = Deftgt; // host default (feather/config.h)
+                return;
+        }
+        // mirrors feather's -t lookup (see feather/main.c)
+        Target *targets[] = {
+            &T_amd64_sysv,
+            &T_amd64_apple,
+            &T_amd64_win,
+            &T_arm64,
+            &T_arm64_apple,
+            &T_rv64,
+            NULL,
+        };
+        for (int i = 0; targets[i] != NULL; i++) {
+                if (strcmp(target, targets[i]->name) == 0) {
+                        T = *targets[i];
+                        return;
                 }
         }
-        // i have no idea what these does, i just copied feather/parse.c
-        fn->con[0].type = CBits;
-        fn->con[0].bits.i = 0xdeaddead; // UNDEF
-        fn->con[1].type = CBits;
-        fn->con[1].bits.i = 0; // 0
-        fn->name = "main";
-        fn->retty = Kx; // -1 = simple w return, not typ[0]
-        fn->lnk.export = 1;
-        fn->leaf = 1;
-
-        // make first block
-        Blk *b = newblk();
-        b->name = "start";
-        b->id = 0;
-        fn->start = b;
-        fn->nblk = 1;
-
-        // emit one instruction: return 42 for test
-        Ref c42 = getcon(42, fn);
-        b->jmp.type = Jretw; // return word
-        b->jmp.arg = c42;
-
-        fn->mem = vnew(0, sizeof(Mem), PFn);
-        fn->nmem = 0;
-        fn->rpo = vnew(1, sizeof(Blk *), PFn);
-        fn->rpo[0] = b;
-        return fn;
+        quil_error(STAGE_FILE, ERR_INVALID_TARGET, target);
+}
+Fn *ssagen_build(ASTnode *prog) {
+        //
 }
 void ssagen_emit_asm(Fn *fn, FILE *out) {
-        T.abi0(fn);
-        fillcfg(fn);
-        ssa(fn);
-        T.abi1(fn);
-        T.isel(fn);
-        filllive(fn);
-        spill(fn);
-        rega(fn);
-        T.emitfn(fn, out); // writes assembly
-        freeall();
+        //
 }

@@ -104,10 +104,11 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                 sem_push_scope(a);
                 for (int i = 0; i < node->data.program.count; i++) {
                         ASTnode *stmt = node->data.program.statements[i];
-                        // file scope may only hold declarations/directives;
+                        // file scope may only hold declarations/directives/namespaces;
                         // executables must live inside 'fn main()'
                         if (stmt->type != NODE_FUNC_DEF && stmt->type != NODE_VAR_DECL &&
-                            stmt->type != NODE_IMPORT && stmt->type != NODE_DIRECTIVE) {
+                            stmt->type != NODE_IMPORT && stmt->type != NODE_DIRECTIVE &&
+                            stmt->type != NODE_NAMESPACE) {
                                 quil_error_at(STAGE_SEMANTIC, ERR_TOP_LEVEL_STMT, stmt->line, stmt->col, NULL);
                         }
                         sem_analyze_node(a, stmt);
@@ -287,10 +288,20 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                         }
                 }
 
-                // register in global function name. note: key = name
-                if (!hashmap_insert(a->functions, strdup(node->data.func_def.name), fs)) {
+                // mangle with current namespace: std::hi if inside `scope std`
+                char *qname;
+                if (a->cur_ns) {
+                        size_t len = strlen(a->cur_ns) + 2 + strlen(node->data.func_def.name) + 1;
+                        qname = malloc(len);
+                        snprintf(qname, len, "%s::%s", a->cur_ns, node->data.func_def.name);
+                } else {
+                        qname = strdup(node->data.func_def.name);
+                }
+                // register in global function name. note: key = qualified name
+                if (!hashmap_insert(a->functions, qname, fs)) {
                         // duplicate function name
                         funcSig_free(fs);
+                        free(qname);
                         quil_error_at(STAGE_SEMANTIC, ERR_DUPLICATED_FUNC, node->line, node->col, node->data.func_def.name);
                 }
 
@@ -322,12 +333,37 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                                 quil_error_at(STAGE_SEMANTIC, ERR_ARG_COUNT, node->line, node->col, message);
                                 // optional later: compare each arg->resolved_type to s->param_types[i]
                         }
+                } else {
+                        quil_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_FUNC, node->line, node->col, node->data.func_call.name);
                 }
         }
 
         // ---- Directives & other ----
         case NODE_IMPORT: break;
         case NODE_DIRECTIVE: break;
+
+        // ---- Namespace & qualified ----
+        case NODE_NAMESPACE: {
+                char *old = a->cur_ns;
+                char *next;
+                if (old) {
+                        size_t len = strlen(old) + 2 + strlen(node->data.namespace_decl.name) + 1;
+                        next = malloc(len);
+                        snprintf(next, len, "%s::%s", old, node->data.namespace_decl.name);
+                } else {
+                        next = strdup(node->data.namespace_decl.name);
+                }
+                a->cur_ns = next;
+                sem_analyze_node(a, node->data.namespace_decl.body);
+                free(next);
+                a->cur_ns = old;
+                break;
+        }
+        case NODE_QUALIFIED:
+                // bare qualified path expression (e.g. a::b) - should have been rejected in parser
+                // (parser enforces `std::foo()` not `std::foo`), so this is unreachable for calls
+                // codegen/sema will resolve qualified calls via NODE_FUNC_CALL name "a::b"
+                break;
 
         default:
                 break;

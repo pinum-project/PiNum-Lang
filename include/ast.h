@@ -60,7 +60,9 @@ typedef enum {
         NODE_READ,      // Built-in read/input statement.
         NODE_BREAK,     // Break from a loop.
         NODE_CONTINUE,  // Continue to next loop iteration.
-        NODE_LIST_LITERAL // List literal (e.g., [1, 2, 3]).
+        NODE_LIST_LITERAL, // List literal (e.g., [1, 2, 3]).
+        NODE_NAMESPACE, // Namespace/scope block e.g. `scope std { ... }` / `mod std { ... }`
+        NODE_QUALIFIED  // Qualified path e.g. `std::println` (segments joined by ::)
 } nodeType;
 
 // Forward declaration so the struct can reference itself
@@ -239,6 +241,16 @@ struct ASTnode {
                         int count;
                         int capacity;
                 } list_literal;
+                // NODE_NAMESPACE: scope std { ... }
+                struct {
+                        char *name;    // e.g. "std"
+                        ASTnode *body; // NODE_BLOCK
+                } namespace_decl;
+                // NODE_QUALIFIED: std::io::println
+                struct {
+                        char **segments; // ["std","io","println"]
+                        int count;
+                } qualified;
         } data;
 };
 
@@ -267,6 +279,8 @@ ASTnode *make_print_node(void);
 ASTnode *make_read_node(char *name);
 ASTnode *make_list_literal_node(ASTnode **elements, int count);
 ASTnode *make_member_access_node(ASTnode *object, char *member, ASTnode **args, int arg_count);
+ASTnode *make_namespace_node(char *name, ASTnode *body);
+ASTnode *make_qualified_node(char **segments, int count);
 // sets the source location on a node for better error messages
 void ast_set_loc(ASTnode *node, int line, int col);
 // helper functions for collection

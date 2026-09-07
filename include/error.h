@@ -46,19 +46,26 @@ typedef enum {
         ERR_MISSING_END_OF_STATEMENT, // expected ';' or newline
 
         // Semantic analysis errors
-        ERR_UNDECLARED_VAR, // used a variable that was never declared
-        ERR_REDECLARED_VAR, // declared a variable already in scope
-        ERR_ARG_COUNT,      // function called with wrong number of args
+        ERR_UNDECLARED_VAR,  // used a variable that was never declared
+        ERR_REDECLARED_VAR,  // declared a variable already in scope
+        ERR_UNDECLARED_FUNC, // called a function that was never declared
+        ERR_ARG_COUNT,       // function called with wrong number of args
         ERR_DUPLICATED_FUNC, // function name defined more than once
-        ERR_NO_MAIN,        // program has no 'fn main()' entry point
-        ERR_TOP_LEVEL_STMT, // statement at file scope that isn't a declaration
+        ERR_NO_MAIN,         // program has no 'fn main()' entry point
+        ERR_TOP_LEVEL_STMT,  // statement at file scope that isn't a declaration
 
         // File / CLI errors
         ERR_NO_INPUT_FILE,     // no input file provided
         ERR_INVALID_FLAG,      // unrecognized flag
         ERR_INVALID_FILE_TYPE, // not a .quil/.qil file
         ERR_CANNOT_OPEN_FILE,  // failed to open the input file
-        ERR_NO_OUTPUT_FILE,    // -o/-oc flag without an output name
+        ERR_NO_OUTPUT_FILE,    // -o flag without an output name
+        ERR_NO_EMIT_VALUE,     // --emit flag without a value
+        ERR_INVALID_EMIT,      // unknown --emit type (expected ssa, asm, binary)
+        ERR_NO_TARGET_VALUE,   // --target flag without a value
+        ERR_INVALID_TARGET,    // unknown --target (expected a feather target name)
+        ERR_INVALID_OPTLEVEL,  // bad -O level (expected 0 or 1)
+        ERR_EMIT_UNSUPPORTED,  // valid --emit type the backend cannot produce yet
         ERR_NO_COMPILER,       // no C compiler found
         ERR_COMPILE_FAILED,    // C compiler returned a non-zero exit code
         ERR_RUNTIME_MISSING,   // installed runtime library not found

@@ -131,9 +131,9 @@ run_semantic_tests() {
                 echo -e "${GREEN}Testing: $test_name${NC}"
                 if [ "$use_valgrind" = "y" ]; then
                         # keep stderr (the leak report) visible for the invalid files
-                        echo "42" | valgrind --leak-check=full --show-leak-kinds=all ./bin/quil -oc "$file.tmp.out" "$file" >/dev/null
+                        echo "42" | valgrind --leak-check=full --show-leak-kinds=all ./bin/quil -o "$file.tmp.out" "$file" >/dev/null
                 else
-                        echo "42" | ./bin/quil -oc "$file.tmp.out" "$file" >/dev/null 2>&1
+                        echo "42" | ./bin/quil -o "$file.tmp.out" "$file" >/dev/null 2>&1
                 fi
                 exit_code=$?
 
@@ -157,14 +157,14 @@ run_semantic_tests() {
                         echo -e "${RED}Result: FAIL (valid file was rejected, exit $exit_code)${NC}"
                 fi
 
-                rm -f "$file.tmp.out" "$file.tmp.out.c"
+                rm -f "$file.tmp.out"
                 echo -e "${CYAN}----------------------------------------------------${NC}"
                 echo ""
         done
 }
 
 # --- Codegen Testing Function ---
-# transpiles each .quil file to payload.c, compiles it to the payload binary,
+# compiles each .quil file to a binary via the ssagen+feather backend,
 # then runs the binary to make sure it executes and exits cleanly.
 # Arguments:
 #   $1: Directory containing codegen test files
@@ -197,9 +197,9 @@ run_codegen_tests() {
                 mkdir -p "$test_dir"
 
                 if [ "$use_valgrind" = "y" ]; then
-                        valgrind --leak-check=full --show-leak-kinds=all ./bin/quil -oc "$test_dir/test result" "$file"
+                        valgrind --leak-check=full --show-leak-kinds=all ./bin/quil -o "$test_dir/test result" "$file"
                 else
-                        ./bin/quil -oc "$test_dir/test result" "$file"
+                        ./bin/quil -o "$test_dir/test result" "$file"
                 fi
 
                 if [ $? -eq 0 ]; then
@@ -211,7 +211,7 @@ run_codegen_tests() {
                                 echo -e "${RED}Result: FAIL (binary did not exit cleanly)${NC}"
                         fi
                 else
-                        echo -e "${RED}Result: FAIL (transpile failed)${NC}"
+                        echo -e "${RED}Result: FAIL (compile failed)${NC}"
                 fi
                 echo -e "${CYAN}----------------------------------------------------${NC}"
                 echo ""
@@ -219,7 +219,7 @@ run_codegen_tests() {
 }
 
 # --- Runtime Testing Function ---
-# transpiles + compiles each .quil, runs the binary, and asserts:
+# compiles each .quil, runs the binary, and asserts:
 #   - `panic_*` files exit non-zero with "index out of bounds" on stderr
 #   - every other file runs and exits cleanly
 # Arguments:
@@ -254,12 +254,12 @@ run_runtime_tests() {
                 mkdir -p "$test_dir"
 
                 if [ "$use_valgrind" = "y" ]; then
-                        valgrind --leak-check=full --show-leak-kinds=all ./bin/quil -oc "$test_dir/test result" "$file" >/dev/null
+                        valgrind --leak-check=full --show-leak-kinds=all ./bin/quil -o "$test_dir/test result" "$file" >/dev/null
                 else
-                        ./bin/quil -oc "$test_dir/test result" "$file" >/dev/null 2>&1
+                        ./bin/quil -o "$test_dir/test result" "$file" >/dev/null 2>&1
                 fi
                 if [ $? -ne 0 ]; then
-                        echo -e "${RED}Result: FAIL (transpile failed)${NC}"
+                        echo -e "${RED}Result: FAIL (compile failed)${NC}"
                         echo -e "${CYAN}----------------------------------------------------${NC}"
                         echo ""
                         continue

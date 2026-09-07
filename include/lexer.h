@@ -40,6 +40,7 @@ typedef enum {
         TOKEN_BREAK,    // keyword break
         TOKEN_CONTINUE, // keyword continue
         TOKEN_FN,       // keyword fn, defines a function
+        TOKEN_SCOPE,    // keyword scope, defines a namespace/scope block
         // Data types
         TOKEN_BOOL,    // boolean data type
         TOKEN_INT8,    // 8-bit signed integer
@@ -67,7 +68,9 @@ typedef enum {
         TOKEN_BSLASH,      // "\" back slash
         TOKEN_COMMA,       // "," comma
         TOKEN_SEMICOLON,   // ";" semicolon
-        TOKEN_COLON,       // ":" colon
+        TOKEN_COLON,       // ":" colon (for ternary ? :)
+        TOKEN_DCOLON,      // "::" double colon (namespace qualifier)
+        TOKEN_ARROW,       // "->" arrow (return-type separator)
         TOKEN_LRPAREN,     // "(" left round parenthesis
         TOKEN_RRPAREN,     // ")" right round parenthesis
         TOKEN_LCPAREN,     // "{" left curly parenthesis

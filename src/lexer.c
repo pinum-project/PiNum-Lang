@@ -144,6 +144,9 @@ token lexer_tokenizer(FILE *buffer) {
                         } else if (ch == '=') {
                                 tokens.type = TOKEN_MEQUAL;
                                 tokens.value = strdup("-=");
+                        } else if (ch == '>') {
+                                tokens.type = TOKEN_ARROW;
+                                tokens.value = strdup("->");
                         } else {
                                 lexer_ungetc(ch, buffer);
                                 tokens.type = TOKEN_MINUS;
@@ -206,8 +209,15 @@ token lexer_tokenizer(FILE *buffer) {
                         tokens.type = TOKEN_QSTRING;
                         tokens.value = strdup(":");
                 } else {
-                        tokens.type = TOKEN_COLON;
-                        tokens.value = strdup(":");
+                        ch = lexer_getc(buffer);
+                        if (ch == ':') {
+                                tokens.type = TOKEN_DCOLON;
+                                tokens.value = strdup("::");
+                        } else {
+                                if (ch != EOF) lexer_ungetc(ch, buffer);
+                                tokens.type = TOKEN_COLON;
+                                tokens.value = strdup(":");
+                        }
                 }
                 break;
         case '(':
@@ -631,6 +641,12 @@ token lexer_tokenize_words(FILE *buffer) {
                 } else {
                         tokens.type = TOKEN_FN;
                 }
+        } else if (strcmp(char_buffer, "scope") == 0) {
+                if (SQUOTE_MODE || DQUOTE_MODE) {
+                        tokens.type = TOKEN_QSTRING;
+                } else {
+                        tokens.type = TOKEN_SCOPE;
+                }
         } else if (strcmp(char_buffer, "read") == 0) {
                 if (SQUOTE_MODE || DQUOTE_MODE) {
                         tokens.type = TOKEN_QSTRING;
@@ -873,6 +889,12 @@ const char *lexer_token_type_to_string(tokenType type) {
                 return "TOKEN_SEMICOLON";
         case TOKEN_COLON:
                 return "TOKEN_COLON";
+        case TOKEN_DCOLON:
+                return "TOKEN_DCOLON";
+        case TOKEN_ARROW:
+                return "TOKEN_ARROW";
+        case TOKEN_SCOPE:
+                return "TOKEN_SCOPE";
         case TOKEN_LRPAREN:
                 return "TOKEN_LRPAREN";
         case TOKEN_RRPAREN:

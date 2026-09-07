@@ -42,6 +42,10 @@ ASTnode *parse_program(Parser *parser) {
 }
 // - statement level parsing -
 ASTnode *parse_statement(Parser *parser) {
+        if (check(parser, TOKEN_FN)) {
+                advance(parser); // consume 'fn'
+                return parse_func_def(parser);
+        }
         if (check(parser, TOKEN_INT8) || check(parser, TOKEN_INT16) ||
             check(parser, TOKEN_INT32) || check(parser, TOKEN_INT64) ||
             check(parser, TOKEN_UINT8) || check(parser, TOKEN_UINT16) ||
@@ -108,6 +112,11 @@ ASTnode *parse_statement(Parser *parser) {
                 ASTnode *node = create_ast_node(NODE_CONTINUE);
                 ast_set_loc(node, kw.line, kw.col);
                 return node;
+        }
+        if (match(parser, TOKEN_SCOPE)) {
+                token ns = consume(parser, TOKEN_ID, "namespace name after 'scope'");
+                ASTnode *body = parse_block(parser); // { ... }
+                return make_namespace_node(ns.value, body);
         }
         if (match(parser, TOKEN_ATSIGN)) {
                 // The lexer splits '@import' into TOKEN_ATSIGN and TOKEN_IMPORT
@@ -253,7 +262,10 @@ static void parse_type(Parser *parser, char **out_type_name, char **out_element_
         *out_type_name = NULL;
         *out_element_type = NULL;
 
-        if (match(parser, TOKEN_INT8)) *out_type_name = "int8";
+        if (check(parser, TOKEN_ID) && strcmp(peek(parser).value, "void") == 0) {
+                advance(parser);
+                *out_type_name = "void";
+        } else if (match(parser, TOKEN_INT8)) *out_type_name = "int8";
         else if (match(parser, TOKEN_INT16)) *out_type_name = "int16";
         else if (match(parser, TOKEN_INT32)) *out_type_name = "int32";
         else if (match(parser, TOKEN_INT64)) *out_type_name = "int64";
@@ -367,9 +379,9 @@ ASTnode *parse_func_def(Parser *parser) {
         char *return_type = NULL;
         char *ret_element = NULL;
         char *ret_storage = NULL;
-        // optional ':' return type; omitting it means void
-        if (check(parser, TOKEN_COLON)) {
-                advance(parser); // consume ':'
+        // optional '->' return type; omitting it means void
+        if (check(parser, TOKEN_ARROW)) {
+                advance(parser); // consume '->'
                 parse_type(parser, &return_type, &ret_element);
         } else {
                 return_type = "void";
@@ -488,18 +500,58 @@ ASTnode *parse_primary(Parser *parser) {
 // parses and refers to parse_primary
 ASTnode *parse_call(Parser *parser) {
         ASTnode *node = parse_primary(parser);
+        // fold a::b::c into NODE_QUALIFIED (must be before call/dot handling)
+        if (node->type == NODE_IDENTIFIER) {
+                int cap = 4, count = 1;
+                char **segs = malloc(cap * sizeof(char *));
+                segs[0] = strdup(node->data.identifier.name);
+                int qline = node->line, qcol = node->col;
+                while (match(parser, TOKEN_DCOLON)) {
+                        token t = consume(parser, TOKEN_ID, "identifier after '::'");
+                        if (count >= cap) {
+                                cap *= 2;
+                                segs = realloc(segs, cap * sizeof(char *));
+                        }
+                        segs[count++] = strdup(t.value);
+                }
+                if (count > 1) {
+                        free_ast_node(node);
+                        node = make_qualified_node(segs, count);
+                        ast_set_loc(node, qline, qcol);
+                        // qualified path must be a function call: require '(' after '::' chain
+                        if (!check(parser, TOKEN_LRPAREN)) {
+                                quil_error_at(STAGE_PARSER, ERR_INVALID_CALL_TARGET, qline, qcol, "qualified path 'std::foo' must be called as 'std::foo()'");
+                        }
+                } else {
+                        free(segs[0]);
+                        free(segs);
+                }
+        }
 
         while (true) {
                 // function call parsing
-                // function call identified by NODE_IDENTIFIER followed by TOKEN_LRPAREN
+                // function call identified by NODE_IDENTIFIER or NODE_QUALIFIED followed by TOKEN_LRPAREN
                 if (match(parser, TOKEN_LRPAREN)) {
-                        if (node->type != NODE_IDENTIFIER) {
+                        if (node->type != NODE_IDENTIFIER && node->type != NODE_QUALIFIED) {
                                 token trigger = parser->tokens->tokens[parser->current - 1];
                                 quil_error_at(STAGE_PARSER, ERR_INVALID_CALL_TARGET, trigger.line, trigger.col, node_type_name(node->type));
                         }
                         int line = node->line;
                         int col = node->col;
-                        char *name = strdup(node->data.identifier.name);
+                        char *name;
+                        if (node->type == NODE_QUALIFIED) {
+                                // join segments with "::" for func_call.name
+                                size_t len = 0;
+                                for (int i = 0; i < node->data.qualified.count; i++) len += strlen(node->data.qualified.segments[i]) + 2;
+                                name = malloc(len + 1);
+                                name[0] = '\0';
+                                for (int i = 0; i < node->data.qualified.count; i++) {
+                                        if (i) strcat(name, "::");
+                                        strcat(name, node->data.qualified.segments[i]);
+                                }
+                        } else {
+                                name = strdup(node->data.identifier.name);
+                        }
                         free_ast_node(node);
                         ASTnode *call = make_func_call_node(name, NULL, 0);
                         ast_set_loc(call, line, col);
@@ -540,22 +592,6 @@ ASTnode *parse_call(Parser *parser) {
                         }
                         node = make_member_access_node(node, m.value, args, arg_count);
                         ast_set_loc(node, m.line, m.col);
-                }
-                // method call
-                // obj.method()
-                else if (match(parser, TOKEN_DOT)) {
-                        token m = consume(parser, TOKEN_DOT, "a member name after '.'");
-                        ASTnode **arg = NULL;
-                        int arg_count = 0;
-                        if (match(parser, TOKEN_RRPAREN)) {
-                                if (!match(parser, TOKEN_RRPAREN)) {
-                                        do {
-                                                ast_add_member_arg(&arg, &arg_count, parse_expression(parser));
-                                        } while (match(parser, TOKEN_COMMA));
-                                }
-                                consume(parser, TOKEN_RRPAREN, "')' after arguments");
-                        }
-                        node = make_member_access_node(node, m.value, arg, arg_count);
                 }
                 // postfix increment
                 // i++  →  i = (i + 1)

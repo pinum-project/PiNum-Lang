@@ -27,27 +27,37 @@ typedef enum {
 
 /*
  * @enum cli_out_mode
- * @brief What -o / -oc told us to produce.
+ * @brief What -o told us to produce.
  */
 typedef enum {
-        CLI_OUT_AOUT,   // default: a.out binary (temp .c deleted)
-        CLI_OUT_C,      // -o file.c: C source only
-        CLI_OUT_BINARY, // -o name: binary only (temp .c deleted)
-        CLI_OUT_BOTH    // -oc name: binary + .c kept
+        CLI_OUT_AOUT,   // default: a.out binary (temp .s deleted)
+        CLI_OUT_BINARY, // -o name: binary only (temp .s deleted)
 } cli_out_mode;
+
+/*
+ * @enum cli_emit_mode
+ * @brief What --emit asked us to produce.
+ */
+typedef enum {
+        CLI_EMIT_BINARY, // default: assemble + link to a binary
+        CLI_EMIT_ASM,    // --emit=asm: assembly (.s) only, no assemble/link
+        CLI_EMIT_SSA,    // --emit=ssa: feather IL (.ssa) only
+} cli_emit_mode;
 
 /*
  * @struct cli_options
  * @brief The result of parsing the command line.
  */
 typedef struct {
-        cli_action action;    // what to do
-        const char *filename; // .quil/.qil file to compile (CLI_ACTION_RUN only)
-        char *out_name;       // value from -o/-oc, NULL if not given
+        cli_action action;      // what to do
+        const char *filename;   // .quil/.qil file to compile (CLI_ACTION_RUN only)
+        char *out_name;         // value from -o, NULL if not given
         cli_out_mode out_mode;
+        cli_emit_mode emit;     // value from --emit, default binary
+        const char *target;     // value from --target, NULL = host default
+        int optlevel;           // value from -O, 0 = no optimization (default)
         bool debug_lexer;
         bool debug_ast;
-        bool use_qbe; // emit QBE IL instead of C (new backend)
 } cli_options;
 
 // parses argv[1..], fills *opts; exits on usage errors.

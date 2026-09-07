@@ -140,6 +140,9 @@ static void print_error_message(ErrorStage stage, ErrorCode code, int line, int 
         case ERR_REDECLARED_VAR:
                 fprintf(stderr, "variable '%s' already declared in this scope", d);
                 break;
+        case ERR_UNDECLARED_FUNC:
+                fprintf(stderr, "call to undeclared function '%s'", d);
+                break;
         case ERR_ARG_COUNT:
                 fprintf(stderr, "%s", d);
                 break;
@@ -166,6 +169,24 @@ static void print_error_message(ErrorStage stage, ErrorCode code, int line, int 
                 break;
         case ERR_NO_OUTPUT_FILE:
                 fprintf(stderr, "output flag requires a file name after it");
+                break;
+        case ERR_NO_EMIT_VALUE:
+                fprintf(stderr, "--emit requires a value (expected 'ssa', 'asm' or 'binary')");
+                break;
+        case ERR_INVALID_EMIT:
+                fprintf(stderr, "invalid emit type '%s' (expected 'ssa', 'asm' or 'binary')", d);
+                break;
+        case ERR_NO_TARGET_VALUE:
+                fprintf(stderr, "--target requires a value (expected a feather target name)");
+                break;
+        case ERR_INVALID_TARGET:
+                fprintf(stderr, "invalid target '%s' (expected 'amd64_sysv', 'amd64_apple', 'amd64_win', 'arm64', 'arm64_apple' or 'rv64')", d);
+                break;
+        case ERR_INVALID_OPTLEVEL:
+                fprintf(stderr, "invalid optimization level '%s' (expected 0 or 1)", d);
+                break;
+        case ERR_EMIT_UNSUPPORTED:
+                fprintf(stderr, "emitting '%s' is not supported yet", d);
                 break;
         case ERR_NO_COMPILER:
                 fprintf(stderr, "no C compiler found (tried cc, gcc, clang, tcc)");

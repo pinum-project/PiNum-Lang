@@ -69,6 +69,10 @@ int main(int argc, char *argv[]) {
                 break; // fall through to the pipeline
         }
 
+        // --- BACKEND OPTIONS ---
+        // selects the feather target (NULL = host default) and optimization level
+        ssagen_apply_options(opts.target, opts.optlevel);
+
         // --- FILE HANDLING ---
         const char *filename = opts.filename;
         const char *extention = strrchr(filename, '.');
@@ -136,44 +140,33 @@ int main(int argc, char *argv[]) {
 
         // --- CODE GENERATION (single backend: ssagen -> feather -> asm) ---
         // codegen_c kept on disk for reference but excluded from pipeline
+        if (opts.emit == CLI_EMIT_SSA) {
+                // needs a .ssa text emitter in the backend; not available yet
+                quil_error(STAGE_CODEGEN, ERR_EMIT_UNSUPPORTED, "ssa");
+        }
+        bool keep_asm = (opts.emit == CLI_EMIT_ASM);
         char asm_buf[1024];
-        char *asm_path = "a.out.s";
-        if (opts.out_mode == CLI_OUT_C) {
-                asm_path = opts.out_name;
-        } else if (opts.out_mode == CLI_OUT_BINARY) {
-                snprintf(asm_buf, sizeof(asm_buf), "%s.tmp.s", opts.out_name);
+        char *asm_path = keep_asm ? "a.out.s" : "a.out.tmp.s";
+        if (opts.out_mode == CLI_OUT_BINARY) {
+                snprintf(asm_buf, sizeof(asm_buf), "%s%s", opts.out_name, keep_asm ? ".s" : ".tmp.s");
                 asm_path = asm_buf;
-        } else if (opts.out_mode == CLI_OUT_BOTH) {
-                snprintf(asm_buf, sizeof(asm_buf), "%s.s", opts.out_name);
-                asm_path = asm_buf;
-        } else if (opts.out_mode == CLI_OUT_AOUT) {
-                asm_path = "a.out.tmp.s";
         }
-        Fn *fn = ssagen_build(ast);
-        FILE *asm_out = fopen(asm_path, "w");
-        if (asm_out == NULL) {
-                quil_error(STAGE_CODEGEN, ERR_CANNOT_OPEN_FILE, asm_path);
-        }
-        ssagen_emit_asm(fn, asm_out);
-        fclose(asm_out);
 
         free_ast_node(ast);
         // freeing the list and its tokens' values
         token_list_free(&list);
 
-        const char *compiler = find_compiler();
-        // compile asm -> binary (feather emits assembly)
-        if (opts.out_mode == CLI_OUT_AOUT) {
-                compile_to(compiler, asm_path, opts.out_name);
-                remove(asm_path);
-        } else if (opts.out_mode == CLI_OUT_BINARY) {
-                compile_to(compiler, asm_path, opts.out_name);
-                remove(asm_path); // delete temp .s
-        } else if (opts.out_mode == CLI_OUT_BOTH) {
-                compile_to(compiler, asm_path, opts.out_name);
-        } else if (opts.out_mode == CLI_OUT_C) {
-                // -o file.s : keep asm, no binary
+        // NOTE: the backend writes feather assembly to asm_path here (ssagen -> feather).
+        if (keep_asm) {
+                // --emit=asm: keep the .s file, skip assemble/link
+                fclose(buffer);
+                return EXIT_SUCCESS;
         }
+
+        const char *compiler = find_compiler();
+        // compile asm -> binary (feather emits assembly), then delete the temp .s
+        compile_to(compiler, asm_path, opts.out_name);
+        remove(asm_path);
 
         // NOTE: 2 if statement below are and for debugging purposes.
         /*

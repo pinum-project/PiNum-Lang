@@ -21,6 +21,7 @@ typedef struct {
         HashMap *functions;    // table for function type and name
         size_t frame_count;    // number of scopes currently open
         size_t frame_capacity; // allocated slots
+        char *cur_ns;          // current namespace/scope
 } SemAnalyzer;
 
 // function signatures

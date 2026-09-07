@@ -11,20 +11,15 @@
 #ifndef SSAGEN_H
 #define SSAGEN_H
 
-#include "../feather/all.h"
+#include "../feather/filapi/filapi.h"
 #include "_hashmap.h"
 #include "ast.h"
 
-struct Fn;
-typedef struct Fn Fn;
+// applies the --target/--optlevel CLI options to the feather backend:
+// selects T (NULL = host default from feather/config.h) and sets optlevel.
+void ssagen_apply_options(const char *target, int optlevel);
 
-typedef struct {
-        Fn *fn;
-        Blk *cur;
-        HashMap *slots;
-} SsaGen;
-
-Fn *ssagen_build(ASTnode *prog);             // return Fn type in memory
-void ssagen_emit_asm(Fn *fn, FILE *asm_out); // Fn* -> .s
+Fn *ssagen_build(ASTnode *prog);
+void ssagen_emit_asm(Fn *fn, FILE *out);
 
 #endif // !SSAGEN_H

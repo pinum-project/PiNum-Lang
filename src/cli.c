@@ -52,14 +52,41 @@ int run_cmd(const char *dir, const char *binary, char *const args[]) {
 }
 
 // --- FLAG PARSING ---
+// the --target names mirror feather's Target list (see feather/main.c)
+static const char *cli_targets[] = {
+        "amd64_sysv", "amd64_apple", "amd64_win", "arm64", "arm64_apple", "rv64", NULL,
+};
+
+// takes the value of --emit/--target in either '--flag=value' or
+// '--flag value' form; exits if no value was given.
+static const char *cli_flag_value(int argc, char *argv[], int *arg_indx, ErrorCode missing) {
+        const char *arg = argv[*arg_indx];
+        const char *eq = strchr(arg, '=');
+        if (eq != NULL) {
+                if (eq[1] == '\0') {
+                        quil_error(STAGE_FILE, missing, NULL);
+                }
+                (*arg_indx)++;
+                return eq + 1;
+        }
+        if (*arg_indx + 1 >= argc) {
+                quil_error(STAGE_FILE, missing, NULL);
+        }
+        const char *value = argv[++(*arg_indx)];
+        (*arg_indx)++;
+        return value;
+}
+
 void cli_parse(int argc, char *argv[], cli_options *opts) {
         opts->action = CLI_ACTION_RUN;
         opts->filename = NULL;
         opts->out_name = NULL;
         opts->out_mode = CLI_OUT_AOUT;
+        opts->emit = CLI_EMIT_BINARY;
+        opts->target = NULL;
+        opts->optlevel = 0;
         opts->debug_lexer = false;
         opts->debug_ast = false;
-        opts->use_qbe = false;
 
         // Exits if user does not provide any file
         if (argc < 2) {
@@ -93,12 +120,40 @@ void cli_parse(int argc, char *argv[], cli_options *opts) {
                         // consume the name first so the flag loop does not evaluate
                         // a name with a '.' (like file.c) as a flag
                         opts->out_name = argv[++arg_indx];
-                        opts->out_mode = (strrchr(opts->out_name, '.') && strcmp(strrchr(opts->out_name, '.'), ".c") == 0) ? CLI_OUT_C : CLI_OUT_BINARY;
+                        opts->out_mode = CLI_OUT_BINARY;
                         arg_indx++;
-                } else if (strcmp(argv[arg_indx], "-oc") == 0 || strcmp(argv[arg_indx], "--output-c") == 0) {
-                        if (arg_indx + 1 >= argc) quil_error(STAGE_FILE, ERR_NO_OUTPUT_FILE, NULL);
-                        opts->out_name = argv[++arg_indx];
-                        opts->out_mode = CLI_OUT_BOTH;
+                } else if (strncmp(argv[arg_indx], "--emit", 6) == 0 && (argv[arg_indx][6] == '=' || argv[arg_indx][6] == '\0')) {
+                        const char *value = cli_flag_value(argc, argv, &arg_indx, ERR_NO_EMIT_VALUE);
+                        if (strcmp(value, "binary") == 0) {
+                                opts->emit = CLI_EMIT_BINARY;
+                        } else if (strcmp(value, "asm") == 0) {
+                                opts->emit = CLI_EMIT_ASM;
+                        } else if (strcmp(value, "ssa") == 0) {
+                                opts->emit = CLI_EMIT_SSA;
+                        } else {
+                                quil_error(STAGE_FILE, ERR_INVALID_EMIT, value);
+                        }
+                } else if (strncmp(argv[arg_indx], "--target", 8) == 0 && (argv[arg_indx][8] == '=' || argv[arg_indx][8] == '\0')) {
+                        const char *value = cli_flag_value(argc, argv, &arg_indx, ERR_NO_TARGET_VALUE);
+                        const char **t = cli_targets;
+                        while (*t != NULL && strcmp(value, *t) != 0) {
+                                t++;
+                        }
+                        if (*t == NULL) {
+                                quil_error(STAGE_FILE, ERR_INVALID_TARGET, value);
+                        }
+                        opts->target = value;
+                } else if (strncmp(argv[arg_indx], "-O", 2) == 0) {
+                        const char *level = argv[arg_indx] + 2;
+                        if (level[0] == '\0') {
+                                opts->optlevel = 1; // bare -O means -O1
+                        } else if (strcmp(level, "0") == 0) {
+                                opts->optlevel = 0;
+                        } else if (strcmp(level, "1") == 0) {
+                                opts->optlevel = 1;
+                        } else {
+                                quil_error(STAGE_FILE, ERR_INVALID_OPTLEVEL, level);
+                        }
                         arg_indx++;
                 } else if (strcmp(argv[arg_indx], "--debug-all") == 0) {
                         opts->debug_lexer = true;
@@ -109,9 +164,6 @@ void cli_parse(int argc, char *argv[], cli_options *opts) {
                         arg_indx++;
                 } else if (strcmp(argv[arg_indx], "--debug-ast") == 0) {
                         opts->debug_ast = true;
-                        arg_indx++;
-                } else if (strcmp(argv[arg_indx], "--qbe") == 0) {
-                        opts->use_qbe = true;
                         arg_indx++;
                 }
                 // Unrecognized and invalid flag handling
@@ -134,14 +186,15 @@ void cli_print_help() {
         printf("quil version %s\n\n", QUIL_VERSION);
         printf("Usage: quil [Flags] <file.quil|file.qil>\n");
         printf("Flags:\n");
-        printf("  %-20s\tOutput a C source file (*.c) or a binary (*).\n", "-o, --output");
-        printf("  %-20s\tOutput both a C source file and a binary.\n", "-oc, --output-c");
+        printf("  %-20s\tOutput a binary with the given name.\n", "-o, --output");
+        printf("  %-20s\tEmit 'ssa', 'asm' or 'binary' (default binary).\n", "--emit=<type>");
+        printf("  %-20s\tgenerate for a target among:\n", "--target=<arch>");
+        printf("  %-20s\t%s.\n", "", "amd64_sysv, amd64_apple, amd64_win, arm64, arm64_apple, rv64");
+        printf("  %-20s\tOptimization level: 0 = none (default), 1 = optimize.\n", "-O0, -O1");
         printf("\n");
         printf("  %-20s\tEnable all debugging functions.\n", "--debug-all");
         printf("  %-20s\tEnable debugging functions for lexer.\n", "--debug-lexer");
         printf("  %-20s\tEnable debugging functions for ast.\n", "--debug-ast");
-        printf("\n");
-        printf("  %-20s\tCompile via the QBE backend (emits QBE IL).\n", "--qbe");
         printf("\n");
         printf("  %-20s\tDisplay quil version information.\n", "-v, --version");
         printf("  %-20s\tUpdate quil to the latest version.\n", "-u, --update");

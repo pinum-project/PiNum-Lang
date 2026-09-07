@@ -73,24 +73,37 @@ To transpile and compile a `.quil`/`.qil` file to a binary (default output is `a
 ./bin/quil example/demonstration.qil
 ```
 
-Quil transpiles your code to C, then compiles it with an available C compiler (it searches for `cc`, `gcc`, `clang`, or `tcc`, or uses your `$CC`). The compiled binary lands in your current working directory.
+Quil compiles your code to assembly via its backend, then assembles it with an available C compiler (it searches for `cc`, `gcc`, `clang`, or `tcc`, or uses your `$CC`). The compiled binary lands in your current working directory.
 
 ### Output Flags
 
 Control what gets produced with the output flags:
 
 ```bash
-# compile to a binary named `program` (temporary C file is deleted)
+# compile to a binary named `program` (temporary assembly file is deleted)
 ./bin/quil -o program example/demonstration.quil
 
-# output only the C source file
-./bin/quil -o program.c example/demonstration.quil
-
-# output both the C source file and a compiled binary
-./bin/quil -oc program example/demonstration.quil
+# keep the generated assembly instead of assembling it
+./bin/quil --emit=asm -o program example/demonstration.quil
 ```
 
-Long forms `--output` and `--output-c` are also accepted. Use `--help` to see all flags.
+The long form `--output` is also accepted. Use `--help` to see all flags.
+
+### Target and Optimization Flags
+
+Pick the codegen target and optimization level:
+
+```bash
+# generate code for another architecture (default is the host)
+./bin/quil --target=arm64 -o program example/demonstration.quil
+
+# set the optimization level: 0 = none (default), 1 = optimize
+./bin/quil -O1 -o program example/demonstration.quil
+```
+
+Valid targets are `amd64_sysv`, `amd64_apple`, `amd64_win`, `arm64`, `arm64_apple` and `rv64`.
+Valid emit types are `binary` (default), `asm` and `ssa`. Note that assembling
+and linking a non-host `--target` needs a matching cross toolchain.
 
 ## 📝 Syntax
 

@@ -9,9 +9,10 @@
 #*************************************************
 
 # Variables
-CC ?= $CC
+CC ?= cc
 RCFLAGS += -Wall -Wextra -O2    # cflags for release make
 DCFLAGS += -Wall -Wextra -g -O2 # cflags for default make
+FEATHER_CFLAGS = -std=c99 -Wall -Wextra -Wpedantic -g -O2
 SRC = src/main.c src/cli.c src/lexer.c src/lexer_filter.c src/parser.c src/methods.c \
       src/ast.c src/codegen_c.c src/helper.c src/error.c src/_hashmap.c src/sema.c src/ssagen.c
 VERSION = $(shell cat VERSION)
@@ -20,32 +21,32 @@ OBJ = $(SRC:src/%.c=$(BUILDDIR)/src/%.o)
 DEP = $(OBJ:.o=.d)
 FEATHER_DEP = $(FEATHER_OBJ:.o=.d)
 
-# Feather lib (no main.o - that's feather binary's main)
-FEATHER_COMM = util.o parse.o abi.o cfg.o mem.o ssa.o alias.o load.o copy.o \
-	       fold.o gvn.o gcm.o simpl.o ifopt.o live.o spill.o rega.o \
-               emit.o
-# Core / Common sources
-FEATHER_CORE_SRC = feather/util.c feather/parse.c feather/abi.c feather/cfg.c feather/mem.c \
-                   feather/ssa.c feather/alias.c feather/load.c feather/copy.c feather/fold.c \
-                   feather/gvn.c feather/gcm.c feather/simpl.c feather/ifopt.c feather/live.c \
-                   feather/spill.c feather/rega.c feather/emit.c
+# Feather backend (mirrors feather/Makefile layout; paths are relative to repo root)
+FEATHER_UTIL_SRC   = feather/src/util/util.c feather/src/util/parse.c
+FEATHER_CORE_SRC   = feather/src/core/cfg.c feather/src/core/mem.c feather/src/core/ssa.c \
+                     feather/src/core/alias.c feather/src/core/load.c feather/src/core/copy.c
+FEATHER_OPT_SRC    = feather/src/opt/fold.c feather/src/opt/gvn.c feather/src/opt/gcm.c \
+                     feather/src/opt/simpl.c feather/src/opt/ifopt.c
+FEATHER_REG_SRC    = feather/src/reg/live.c feather/src/reg/spill.c feather/src/reg/rega.c
+FEATHER_EMIT_SRC   = feather/src/emit/emit.c feather/src/emit/abi.c
+FEATHER_AMD64_SRC  = feather/amd64/targ.c feather/amd64/sysv.c feather/amd64/isel.c \
+                     feather/amd64/emit.c feather/amd64/winabi.c
+FEATHER_ARM64_SRC  = feather/arm64/targ.c feather/arm64/abi.c feather/arm64/isel.c \
+                     feather/arm64/emit.c
+FEATHER_RV64_SRC   = feather/rv64/targ.c feather/rv64/abi.c feather/rv64/isel.c \
+                     feather/rv64/emit.c
+FEATHER_FILAPI_SRC = feather/filapi/src/ilbuilder.c feather/filapi/src/data.c \
+                     feather/filapi/src/module.c feather/filapi/src/type.c
 
-# Architecture-specific sources
-AMD64_SRC = feather/amd64/targ.c feather/amd64/sysv.c feather/amd64/isel.c \
-            feather/amd64/emit.c feather/amd64/winabi.c
-
-ARM64_SRC = feather/arm64/targ.c feather/arm64/abi.c feather/arm64/isel.c \
-            feather/arm64/emit.c
-
-RV64_SRC  = feather/rv64/targ.c feather/rv64/abi.c feather/rv64/isel.c \
-            feather/rv64/emit.c
-
-# Include all architectures into FEATHER_SRC
-FEATHER_SRC = $(FEATHER_CORE_SRC) $(AMD64_SRC) $(ARM64_SRC) $(RV64_SRC)
+# Include all feather sources (core lib, without feather/main.c)
+FEATHER_SRC = $(FEATHER_UTIL_SRC) $(FEATHER_CORE_SRC) $(FEATHER_OPT_SRC) \
+              $(FEATHER_REG_SRC) $(FEATHER_EMIT_SRC) \
+              $(FEATHER_AMD64_SRC) $(FEATHER_ARM64_SRC) $(FEATHER_RV64_SRC) \
+              $(FEATHER_FILAPI_SRC)
 FEATHER_OBJ = $(FEATHER_SRC:%.c=$(BUILDDIR)/%.o)
 
 TARGET = bin/quil
-MKDIR = mkdir -p bin
+MKDIR = mkdir -p $(BUILDDIR) bin
 RM = rm -f
 
 # Check for Termux
@@ -59,24 +60,58 @@ endif
 all: $(TARGET)
 
 # Per-file objects (incremental, parallel)
-$(BUILDDIR)/src/%.o: src/%.c
+$(BUILDDIR)/src/%.o: src/%.c feather/config.h
 	@mkdir -p $(dir $@)
 	$(CC) $(DCFLAGS) -MMD -MP -c $< -o $@
-$(BUILDDIR)/feather/%.o: feather/%.c
+# Generic rule for nested feather paths (mirrors feather's $(BUILDDIR)/%.o: %.c)
+$(BUILDDIR)/%.o: %.c feather/config.h
 	@mkdir -p $(dir $@)
-	$(CC) $(DCFLAGS) -MMD -MP -c $< -o $@
-$(BUILDDIR)/feather/amd64/%.o: feather/amd64/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(DCFLAGS) -MMD -MP -c $< -o $@
-$(BUILDDIR)/feather/arm64/%.o: feather/arm64/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(DCFLAGS) -MMD -MP -c $< -o $@
-$(BUILDDIR)/feather/rv64/%.o: feather/rv64/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(DCFLAGS) -MMD -MP -c $< -o $@
+	$(CC) $(FEATHER_CFLAGS) -MMD -MP -c $< -o $@
+
+# Header deps (mirrors feather/Makefile; feather keeps identical copies at
+# feather/*.h and feather/src/*.h, so depend on both)
+$(FEATHER_UTIL_SRC:%.c=$(BUILDDIR)/%.o) $(FEATHER_CORE_SRC:%.c=$(BUILDDIR)/%.o) \
+$(FEATHER_OPT_SRC:%.c=$(BUILDDIR)/%.o) $(FEATHER_REG_SRC:%.c=$(BUILDDIR)/%.o) \
+$(FEATHER_EMIT_SRC:%.c=$(BUILDDIR)/%.o): feather/all.h feather/ops.h \
+	feather/src/all.h feather/src/ops.h
+$(FEATHER_FILAPI_SRC:%.c=$(BUILDDIR)/%.o): feather/filapi/include/ilbuilder.h \
+	feather/filapi/include/data.h feather/filapi/include/module.h \
+	feather/filapi/include/type.h feather/all.h feather/src/ops.h feather/config.h
+$(FEATHER_AMD64_SRC:%.c=$(BUILDDIR)/%.o): feather/amd64/all.h
+$(FEATHER_ARM64_SRC:%.c=$(BUILDDIR)/%.o): feather/arm64/all.h
+$(FEATHER_RV64_SRC:%.c=$(BUILDDIR)/%.o): feather/rv64/all.h
+
+# feather/config.h picks the default target for the host (mirrors feather/Makefile)
+feather/config.h:
+	@case `uname` in                               \
+	*Darwin*)                                      \
+		case `uname -m` in                     \
+		*arm64*)                               \
+			echo "#define Deftgt T_arm64_apple";\
+			;;                             \
+		*)                                     \
+			echo "#define Deftgt T_amd64_apple";\
+			;;                             \
+		esac                                   \
+		;;                                     \
+	*)                                             \
+		case `uname -m` in                     \
+		*aarch64*|*arm64*)                     \
+			echo "#define Deftgt T_arm64"; \
+			;;                             \
+		*riscv64*)                             \
+			echo "#define Deftgt T_rv64";  \
+			;;                             \
+		*)                                     \
+			echo "#define Deftgt T_amd64_sysv";\
+			;;                             \
+		esac                                   \
+		;;                                     \
+	esac > $@
 
 # Compile it to quil/bin/ directory
 $(TARGET): $(OBJ) $(FEATHER_OBJ)
+	@$(MKDIR)
 	$(CC) $(DCFLAGS) $(OBJ) $(FEATHER_OBJ) -o $(TARGET)
 
 # compiling without the -g flag so it has smaller binary
@@ -107,9 +142,13 @@ install: $(TARGET)
 clean:
 	$(RM) -r $(BUILDDIR) $(TARGET)
 
+# Also drop the generated feather/config.h (mirrors feather's clean-gen)
+clean-gen: clean
+	$(RM) feather/config.h
+
 # Neovim syntax activation
 nvim:
 	@$(MKDIR)
 	chmod +x activate_syntax.sh && ./activate_syntax.sh
 
-.PHONY: all test clean nvim install vscode feather
+.PHONY: all release test clean clean-gen nvim install vscode feather
