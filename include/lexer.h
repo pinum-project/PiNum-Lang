@@ -55,7 +55,7 @@ typedef enum {
         TOKEN_FLOAT64, // 64-bit IEEE float
         TOKEN_CHAR,    // char datatype
         TOKEN_STRING,  // string datatype, basically char array in the transpiled code
-        TOKEN_VEC,     // vec datatype (generic)
+        TOKEN_VEC,     // vec datatype (removed, kept as reserved to error)
         TOKEN_TRUE,    // boolean literal true
         TOKEN_FALSE,   // boolean literal false
         // single character tokens

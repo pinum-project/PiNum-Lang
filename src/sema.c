@@ -62,16 +62,12 @@ static const char *sem_resolve(SemAnalyzer *a, const char *name) {
         }
         return NULL;
 }
-// full C type for a symbol, e.g. "char *", "vec", "vec_int32"
+// full C type for a symbol, e.g. "char *"
 static char *sem_fulltype(const char *type_name, const char *modifiers, const char *element_type) {
+        (void)element_type; // vec removed
         char *base;
         if (strcmp(type_name, "string") == 0) base = strdup("char *");
-        else if (strcmp(type_name, "vec") == 0) {
-                // monomorphize vec<T> → vec_T
-                char buf[32];
-                snprintf(buf, sizeof(buf), "vec_%s", element_type ? element_type : "int32");
-                base = strdup(buf);
-        } else base = strdup(type_name);
+        else base = strdup(type_name);
         if (modifiers == NULL) {
                 return base;
         }
@@ -150,13 +146,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                 if (!type) {
                         quil_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.array_access.name);
                 }
-                if (strncmp(type, "vec_", 4) == 0) {
-                        const char *elem = type + 4; // int, float, string...
-                        if (strcmp(elem, "string") == 0) node->resolved_type = strdup("char *");
-                        else node->resolved_type = strdup(elem);
-                } else {
-                        node->resolved_type = strdup(type);
-                }
+                node->resolved_type = strdup(type);
                 sem_analyze_node(a, node->data.array_access.index);
                 break;
         }
@@ -193,17 +183,11 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
 
         // ---- Declarations & assignment ----
         case NODE_VAR_DECL: {
-                char *type = sem_fulltype(node->data.var_decl.type_name, node->data.var_decl.modifiers, node->data.var_decl.element_type);
+                char *type = sem_fulltype(node->data.var_decl.type_name, node->data.var_decl.modifiers, NULL);
                 sem_declare(a, node->data.var_decl.name, type, node->line, node->col);
                 free(type); // sem_declare strdup'd it so we can free this copy
                 if (node->data.var_decl.value) {
                         sem_analyze_node(a, node->data.var_decl.value);
-                        // give a [ ... ] literal in a vec<T> decl its concrete type
-                        if (node->data.var_decl.value->type == NODE_LIST_LITERAL && node->data.var_decl.element_type) {
-                                char buf[32];
-                                snprintf(buf, sizeof(buf), "vec_%s", node->data.var_decl.element_type);
-                                node->data.var_decl.value->resolved_type = strdup(buf);
-                        }
                 }
                 break;
         }
@@ -213,10 +197,6 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                         quil_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.assign.name);
                 }
                 if (node->data.assign.index) {
-                        // arr[idx] = v — validate the array and analyze the index
-                        if (strncmp(type, "vec_", 4) != 0) {
-                                quil_error_at(STAGE_SEMANTIC, ERR_UNKNOWN, node->line, node->col, node->data.assign.name);
-                        }
                         sem_analyze_node(a, node->data.assign.index);
                 }
                 sem_analyze_node(a, node->data.assign.value);
@@ -284,7 +264,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                         for (int i = 0; i < (int)fs->param_count; i++) {
                                 ASTnode *p = node->data.func_def.params[i];
                                 // sem_fulltype returns a freshly-allocated string
-                                fs->param_types[i] = sem_fulltype(p->data.var_decl.type_name, p->data.var_decl.modifiers, p->data.var_decl.element_type);
+                                fs->param_types[i] = sem_fulltype(p->data.var_decl.type_name, p->data.var_decl.modifiers, NULL);
                         }
                 }
 
@@ -309,7 +289,7 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                 sem_push_scope(a);
                 for (size_t i = 0; i < fs->param_count; i++) {
                         ASTnode *p = node->data.func_def.params[i];
-                        char *pt = sem_fulltype(p->data.var_decl.type_name, p->data.var_decl.modifiers, p->data.var_decl.element_type);
+                        char *pt = sem_fulltype(p->data.var_decl.type_name, p->data.var_decl.modifiers, NULL);
                         sem_declare(a, p->data.var_decl.name, pt, p->line, p->col);
                         free(pt); // sem_fulltype returns a fresh string; sem_declare strdup'd it
                 }

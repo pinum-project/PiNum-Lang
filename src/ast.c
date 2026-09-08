@@ -192,7 +192,6 @@ ASTnode *make_var_decl_node(char *type_name, char *modifiers, char *name, ASTnod
         node->data.var_decl.value = value;
         node->data.var_decl.is_array = is_array;
         node->data.var_decl.array_size = array_size;
-        node->data.var_decl.element_type = NULL;
         return node;
 }
 ASTnode *make_assign_node(char *name, ASTnode *value) {
@@ -374,7 +373,6 @@ void free_ast_node(ASTnode *node) {
                 free(node->data.var_decl.type_name);
                 free(node->data.var_decl.modifiers);
                 free(node->data.var_decl.name);
-                free(node->data.var_decl.element_type);
                 free_ast_node(node->data.var_decl.value);
                 break;
         case NODE_ASSIGN:
@@ -522,14 +520,9 @@ void print_ast(ASTnode *node, int level) {
                 }
                 break;
         case NODE_VAR_DECL:
-                printf("VAR_DECL: %s %s %s%s%s\n",
-                       node->data.var_decl.modifiers ? node->data.var_decl.modifiers : "",
-                       node->data.var_decl.type_name ? node->data.var_decl.type_name : "",
-                       node->data.var_decl.name,
-                       node->data.var_decl.element_type ? "<" : "",
-                       node->data.var_decl.element_type ? node->data.var_decl.element_type : "");
-                if (node->data.var_decl.element_type) printf(">");
-                if (node->data.var_decl.is_array) printf("[]");
+                printf("VAR_DECL: %s %s %s", node->data.var_decl.modifiers ? node->data.var_decl.modifiers : "",
+                       node->data.var_decl.type_name ? node->data.var_decl.type_name : "", node->data.var_decl.name);
+                if (node->data.var_decl.is_array) printf("[%d]", node->data.var_decl.array_size);
                 printf("\n");
                 if (node->data.var_decl.value) {
                         print_ast(node->data.var_decl.value, level + 1);

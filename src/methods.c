@@ -12,9 +12,9 @@
 #include <string.h>
 
 const method_def METHODS[] = {
-    {"vec_", "append", "__quil_%s_append", NULL},
+    // vec removed - stdlib will provide vec.quil later
 };
-const int METHOD_COUNT = sizeof(METHODS) / sizeof(METHODS[0]);
+const int METHOD_COUNT = 0;
 
 // NOTE: hashmap will be implimented when the METHODS exceed 32 elements
 const method_def *method_lookup(const char *obj_type, const char *name) {

@@ -257,11 +257,15 @@ ASTnode *parse_read_statement(Parser *parser) {
         ast_set_loc(node, name_token.line, name_token.col);
         return node;
 }
-// parse a type: simple (int32, uint8, etc.) or generic (vec<int32>)
+// parse a type: simple (int32, uint8, etc.)
 static void parse_type(Parser *parser, char **out_type_name, char **out_element_type) {
         *out_type_name = NULL;
         *out_element_type = NULL;
 
+        if (check(parser, TOKEN_VEC)) {
+                token t = peek(parser);
+                quil_error_at(STAGE_PARSER, ERR_UNKNOWN, t.line, t.col, "vec has been removed, use array type 'int32[N]' (vec will be stdlib later)");
+        }
         if (check(parser, TOKEN_ID) && strcmp(peek(parser).value, "void") == 0) {
                 advance(parser);
                 *out_type_name = "void";
@@ -278,39 +282,27 @@ static void parse_type(Parser *parser, char **out_type_name, char **out_element_
         else if (match(parser, TOKEN_CHAR)) *out_type_name = "char";
         else if (match(parser, TOKEN_STRING)) *out_type_name = "string";
         else if (match(parser, TOKEN_BOOL)) *out_type_name = "bool";
-        else if (match(parser, TOKEN_VEC)) {
-                *out_type_name = "vec";
-                consume(parser, TOKEN_LABRACKET, "'<' after vec");
-                // parse element type
-                if (match(parser, TOKEN_INT8)) *out_element_type = "int8";
-                else if (match(parser, TOKEN_INT16)) *out_element_type = "int16";
-                else if (match(parser, TOKEN_INT32)) *out_element_type = "int32";
-                else if (match(parser, TOKEN_INT64)) *out_element_type = "int64";
-                else if (match(parser, TOKEN_UINT8)) *out_element_type = "uint8";
-                else if (match(parser, TOKEN_UINT16)) *out_element_type = "uint16";
-                else if (match(parser, TOKEN_UINT32)) *out_element_type = "uint32";
-                else if (match(parser, TOKEN_UINT64)) *out_element_type = "uint64";
-                else if (match(parser, TOKEN_FLOAT32)) *out_element_type = "float32";
-                else if (match(parser, TOKEN_FLOAT64)) *out_element_type = "float64";
-                else if (match(parser, TOKEN_CHAR)) *out_element_type = "char";
-                else if (match(parser, TOKEN_STRING)) *out_element_type = "string";
-                else if (match(parser, TOKEN_BOOL)) *out_element_type = "bool";
-                else {
-                        token found = peek(parser);
-                        quil_expected_at(STAGE_PARSER, found.line, found.col, "element type (int32, float64, etc.)", peek_display(parser));
-                }
-                consume(parser, TOKEN_RABRACKET, "'>' after element type");
-        } else {
+        else {
                 token found = peek(parser);
-                quil_expected_at(STAGE_PARSER, found.line, found.col, "a data type (int32, float64, vec<int32>, etc.)", peek_display(parser));
+                quil_expected_at(STAGE_PARSER, found.line, found.col, "a data type (int32, float64, etc.)", peek_display(parser));
         }
 }
 ASTnode *parse_declaration(Parser *parser) {
         char *data_type = NULL;
         char *element_type = NULL;
 
-        // Data Type (Required) - supports types like int32, uint8, vec<int32>
+        // Data Type (Required)
         parse_type(parser, &data_type, &element_type);
+
+        // array suffix: int32[512]
+        bool is_array = false;
+        int array_size = 0;
+        if (match(parser, TOKEN_LSPAREN)) {
+                token sz = consume(parser, TOKEN_INUM, "array size");
+                array_size = sz.int_value;
+                consume(parser, TOKEN_RSPAREN, "']' after array size");
+                is_array = true;
+        }
 
         // Veriable name
         token name_token = consume(parser, TOKEN_ID, "a variable name");
@@ -323,10 +315,7 @@ ASTnode *parse_declaration(Parser *parser) {
         // expecting for a semicolon at the end
         consume_end_of_statement(parser);
 
-        ASTnode *decl = make_var_decl_node(data_type, NULL, var_name, initializer, false, 0);
-        if (element_type) {
-                decl->data.var_decl.element_type = strdup(element_type);
-        }
+        ASTnode *decl = make_var_decl_node(data_type, NULL, var_name, initializer, is_array, array_size);
         ast_set_loc(decl, name_token.line, name_token.col);
         return decl;
 }
@@ -349,11 +338,17 @@ ASTnode *parse_func_def_param(Parser *parser) {
         char *element_type = NULL;
         parse_type(parser, &type_name, &element_type);
 
-        token name_token = consume(parser, TOKEN_ID, "a parameter name");
-        ASTnode *param = make_var_decl_node(type_name, NULL, name_token.value, NULL, false, 0);
-        if (element_type) {
-                param->data.var_decl.element_type = strdup(element_type);
+        bool is_array = false;
+        int array_size = 0;
+        if (match(parser, TOKEN_LSPAREN)) {
+                token sz = consume(parser, TOKEN_INUM, "array size");
+                array_size = sz.int_value;
+                consume(parser, TOKEN_RSPAREN, "']' after array size");
+                is_array = true;
         }
+
+        token name_token = consume(parser, TOKEN_ID, "a parameter name");
+        ASTnode *param = make_var_decl_node(type_name, NULL, name_token.value, NULL, is_array, array_size);
         ast_set_loc(param, name_token.line, name_token.col);
         return param;
 }
@@ -378,7 +373,6 @@ ASTnode *parse_func_def(Parser *parser) {
 
         char *return_type = NULL;
         char *ret_element = NULL;
-        char *ret_storage = NULL;
         // optional '->' return type; omitting it means void
         if (check(parser, TOKEN_ARROW)) {
                 advance(parser); // consume '->'
@@ -387,16 +381,8 @@ ASTnode *parse_func_def(Parser *parser) {
                 return_type = "void";
         }
 
-        // resolve vec<T> → vec_T for the return type (mirrors codegen_decl_type)
-        if (strcmp(return_type, "vec") == 0 && ret_element) {
-                ret_storage = malloc(strlen("vec_") + strlen(ret_element) + 1);
-                sprintf(ret_storage, "vec_%s", ret_element);
-                return_type = ret_storage;
-        }
-
         ASTnode *body = parse_block(parser);
         ASTnode *def = make_func_def_node(return_type, func_name.value, params, param_count, body);
-        free(ret_storage);
         return def;
 }
 

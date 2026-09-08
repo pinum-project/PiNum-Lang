@@ -22,6 +22,7 @@ a.out
 a.out.c
 a.out.s
 *.tmp.s
+.ssa
 
 # dont ignore
 !bin/.gitkeep

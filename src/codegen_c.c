@@ -70,7 +70,7 @@ static const char *specifier_for_type(const char *type) {
         if (strcmp(type, "uint64") == 0) return "%llu";
         if (strcmp(type, "float32") == 0 || strcmp(type, "float64") == 0) return "%f";
         if (strcmp(type, "char") == 0) return "%c";
-        return "%d"; // vec_* use their own print helpers; fallback
+        return "%d";
 }
 
 // maps a Quil type name to its C equivalent
@@ -132,20 +132,9 @@ static const char *codegen_specifier(ASTnode *node) {
         }
 }
 
-// maps a declaration to its concrete C type, resolving vec<T> → vec_T
+// maps a declaration to its concrete C type
 static const char *codegen_decl_type(ASTnode *node) {
-        if (node->data.var_decl.type_name && strcmp(node->data.var_decl.type_name, "vec") == 0) {
-                static char buf[32];
-                snprintf(buf, sizeof(buf), "vec_%s", node->data.var_decl.element_type ? node->data.var_decl.element_type : "int32");
-                return buf;
-        }
         return codegen_type(node->data.var_decl.type_name);
-}
-
-// true when a node holds a vec<T> value (resolved_type like "vec_int")
-static bool is_vec(ASTnode *node) {
-        const char *t = node->resolved_type;
-        return t && strncmp(t, "vec_", 4) == 0;
 }
 
 // maps a Quil operator token to its C equivalent
@@ -176,21 +165,14 @@ static void codegen_for_param(ASTnode *node, FILE *output, int level) {
         }
         switch (node->type) {
         case NODE_VAR_DECL: {
-                // build the full C type, e.g. "long int" or "char *" or "vec_int"
                 const char *base_type = codegen_decl_type(node);
-                char full_type[64];
-                if (node->data.var_decl.modifiers) {
-                        snprintf(full_type, sizeof(full_type), "%s %s", node->data.var_decl.modifiers, base_type);
-                } else {
-                        snprintf(full_type, sizeof(full_type), "%s", base_type);
-                }
-                // get the modifier
                 if (node->data.var_decl.modifiers) {
                         fprintf(output, "%s ", node->data.var_decl.modifiers);
                 }
-                // get type and name
                 fprintf(output, "%s %s", base_type, node->data.var_decl.name);
-                // check if they have any value assigned
+                if (node->data.var_decl.is_array) {
+                        fprintf(output, "[%d]", node->data.var_decl.array_size);
+                }
                 if (node->data.var_decl.value) {
                         fprintf(output, " = ");
                         codegen_node(node->data.var_decl.value, output, level);
@@ -199,9 +181,9 @@ static void codegen_for_param(ASTnode *node, FILE *output, int level) {
         }
         case NODE_ASSIGN:
                 if (node->data.assign.index) {
-                        fprintf(output, "%s.data[__quil_check_bounds(%s.size, ", node->data.assign.name, node->data.assign.name);
+                        fprintf(output, "%s[", node->data.assign.name);
                         codegen_node(node->data.assign.index, output, level);
-                        fprintf(output, ")] = ");
+                        fprintf(output, "] = ");
                 } else {
                         fprintf(output, "%s = ", node->data.assign.name);
                 }
@@ -233,33 +215,22 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 fprintf(output, "'%c'", node->data.char_literal.value);
                 break;
         case NODE_LIST_LITERAL: {
-                // e.g. [1, 2] in a vec<int> decl → __quil_vec_int_init(2, (int)1, (int)2)
-                // each element is cast to the vec's element type so the variadic
-                // init() reads the correct C type (e.g. int literals in a vec<double>
-                // must be passed as double, not int — otherwise va_arg misreads them).
-                const char *vec_type = node->resolved_type ? node->resolved_type : "vec_int32";
-                const char *elem = vec_type;
-                if (strncmp(vec_type, "vec_", 4) == 0) {
-                        elem = codegen_type(vec_type + 4);
-                } else {
-                        elem = "int32";
-                }
-                fprintf(output, "__quil_%s_init(%d", vec_type, node->data.list_literal.count);
+                // array initializer: [1, 2, 3] -> {1, 2, 3}
+                fprintf(output, "{");
                 for (int i = 0; i < node->data.list_literal.count; i++) {
-                        fprintf(output, ", (%s)", elem);
+                        if (i) fprintf(output, ", ");
                         codegen_node(node->data.list_literal.elements[i], output, level);
                 }
-                fprintf(output, ")");
+                fprintf(output, "}");
                 break;
         }
         case NODE_IDENTIFIER:
                 fprintf(output, "%s", node->data.identifier.name);
                 break;
         case NODE_ARRAY_ACCESS:
-                // bound check using runtime function first
-                fprintf(output, "%s.data[__quil_check_bounds(%s.size, ", node->data.array_access.name, node->data.array_access.name);
+                fprintf(output, "%s[", node->data.array_access.name);
                 codegen_node(node->data.array_access.index, output, level);
-                fprintf(output, ")]");
+                fprintf(output, "]");
                 break;
 
         // ---- Expressions ----
@@ -341,21 +312,14 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
 
         // ---- Declarations & assignment ----
         case NODE_VAR_DECL: {
-                // build the full C type, e.g. "long int" or "char *" or "vec_int"
                 const char *base_type = codegen_decl_type(node);
-                char full_type[64];
-                if (node->data.var_decl.modifiers) {
-                        snprintf(full_type, sizeof(full_type), "%s %s", node->data.var_decl.modifiers, base_type);
-                } else {
-                        snprintf(full_type, sizeof(full_type), "%s", base_type);
-                }
-                // get the modifier
                 if (node->data.var_decl.modifiers) {
                         fprintf(output, "%s ", node->data.var_decl.modifiers);
                 }
-                // get type and name
                 fprintf(output, "%s %s", base_type, node->data.var_decl.name);
-                // check if they have any value assigned
+                if (node->data.var_decl.is_array) {
+                        fprintf(output, "[%d]", node->data.var_decl.array_size);
+                }
                 if (node->data.var_decl.value) {
                         fprintf(output, " = ");
                         codegen_node(node->data.var_decl.value, output, level);
@@ -365,9 +329,9 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
         }
         case NODE_ASSIGN:
                 if (node->data.assign.index) {
-                        fprintf(output, "%s.data[__quil_check_bounds(%s.size, ", node->data.assign.name, node->data.assign.name);
+                        fprintf(output, "%s[", node->data.assign.name);
                         codegen_node(node->data.assign.index, output, level);
-                        fprintf(output, ")] = ");
+                        fprintf(output, "] = ");
                 } else {
                         fprintf(output, "%s = ", node->data.assign.name);
                 }
@@ -437,37 +401,13 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
         // ---- Built-in statements ----
         case NODE_PRINT: {
                 int n = node->data.print.arg_count;
-                int group_start = 0;
-                for (int i = 0; i < n; i++) {
-                        if (is_vec(node->data.print.args[i])) {
-                                // flush the scalar group that came before this vec
-                                if (i > group_start) {
-                                        fprintf(output, "printf(\"");
-                                        for (int j = group_start; j < i; j++) {
-                                                fprintf(output, "%s", codegen_specifier(node->data.print.args[j]));
-                                        }
-                                        fprintf(output, "\"");
-                                        for (int j = group_start; j < i; j++) {
-                                                fprintf(output, ", ");
-                                                codegen_node(node->data.print.args[j], output, level);
-                                        }
-                                        fprintf(output, ");\n");
-                                }
-                                // vec args print their own "[1, 2]" via the runtime helper
-                                fprintf(output, "__quil_%s_print(", node->data.print.args[i]->resolved_type);
-                                codegen_node(node->data.print.args[i], output, level);
-                                fprintf(output, ");\n");
-                                group_start = i + 1;
-                        }
-                }
-                // flush any remaining scalar args
-                if (group_start < n) {
+                if (n > 0) {
                         fprintf(output, "printf(\"");
-                        for (int j = group_start; j < n; j++) {
+                        for (int j = 0; j < n; j++) {
                                 fprintf(output, "%s", codegen_specifier(node->data.print.args[j]));
                         }
                         fprintf(output, "\"");
-                        for (int j = group_start; j < n; j++) {
+                        for (int j = 0; j < n; j++) {
                                 fprintf(output, ", ");
                                 codegen_node(node->data.print.args[j], output, level);
                         }
@@ -510,22 +450,13 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 break;
         }
 
-        // ---- Member access & method calls ----
+        // ---- Member access ----
         case NODE_MEMBER_ACCESS: {
                 ASTnode *obj = node->data.member_access.object;
                 const char *member = node->data.member_access.member;
                 if (node->data.member_access.arg_count > 0) {
-                        const method_def *m = method_lookup(obj->resolved_type, member);
-                        // build helper name: __quil_%_append
-                        char fn[64];
-                        snprintf(fn, sizeof(fn), m->c_helper, obj->resolved_type);
-                        fprintf(output, "%s(&", fn);
-                        codegen_node(obj, output, level);
-                        fprintf(output, ", ");
-                        codegen_node(node->data.member_access.args[0], output, level);
-                        fprintf(output, ");\n");
+                        fprintf(output, "// TODO: method call %s.%s\n", obj->data.identifier.name, member);
                 } else {
-                        // property read: obj.member
                         codegen_node(obj, output, level);
                         fprintf(output, ".%s", member);
                 }
