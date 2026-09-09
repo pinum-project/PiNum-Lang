@@ -167,6 +167,32 @@ static Ref emit_expr(Ssagen *s, ASTnode *n) {
                 }
                 quil_error(STAGE_CODEGEN, ERR_UNKNOWN, lexer_token_type_to_string(op));
         }
+        case NODE_TERNARY_EXPRESSION: {
+                Ref cond = emit_expr(s, n->data.ternary_expression.condition);
+                Blk *then_blk = il_create_block(s->ilb, "tern.then");
+                Blk *else_blk = il_create_block(s->ilb, "tern.else");
+                Blk *merge = il_create_block(s->ilb, "tern.merge");
+                il_create_cond_br(s->ilb, cond, then_blk, else_blk); // cur terminated
+
+                // then
+                il_set_insert_point(s->ilb, then_blk);
+                Ref tv = emit_expr(s, n->data.ternary_expression.then_expr);
+                il_create_br(s->ilb, merge);
+                // else
+                il_set_insert_point(s->ilb, else_blk);
+                Ref ev = emit_expr(s, n->data.ternary_expression.else_expr);
+                il_create_br(s->ilb, merge);
+
+                // merge phi
+                il_set_insert_point(s->ilb, merge);
+                Blk *preds[] = {then_blk, else_blk};
+                Ref vals[] = {tv, ev};
+                int cls = quil_to_cls(n->resolved_type);
+                if (cls == Kl) return il_create_phi_l(s->ilb, preds, vals, 2);
+                if (cls == Kd) return il_create_phi_d(s->ilb, preds, vals, 2);
+                if (cls == Ks) return il_create_phi_s(s->ilb, preds, vals, 2);
+                return il_create_phi_w(s->ilb, preds, vals, 2);
+        }
         default:
                 quil_error(STAGE_CODEGEN, ERR_UNKNOWN, node_type_name(n->type));
         }
