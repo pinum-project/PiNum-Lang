@@ -41,6 +41,8 @@ typedef enum {
         TOKEN_CONTINUE, // keyword continue
         TOKEN_FN,       // keyword fn, defines a function
         TOKEN_SCOPE,    // keyword scope, defines a namespace/scope block
+        TOKEN_PUBLIC,   // keyword public, marks fn as exported
+        TOKEN_EXTERN,   // keyword extern, declares fn without body (prototype)
         // Data types
         TOKEN_BOOL,    // boolean data type
         TOKEN_INT8,    // 8-bit signed integer

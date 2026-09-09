@@ -120,7 +120,9 @@ struct ASTnode {
                         char *name;
                         ASTnode **params; // Array of NODE_VAR_DECL nodes
                         int param_count;
-                        ASTnode *body; // NODE_BLOCK containing the function code
+                        ASTnode *body; // NODE_BLOCK containing the function code, NULL for extern prototype
+                        bool is_public; // public fn -> exported
+                        bool is_extern; // extern fn -> prototype, no body
                 } func_def;
 
                 // NODE_MEMBER_ACCESS: obj.member  (arg_count > 0 → method call obj.method(args))

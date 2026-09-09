@@ -87,6 +87,17 @@ static Ref emit_expr(Ssagen *s, ASTnode *n) {
                 // return address of data
                 return il_global_sym(s->ilb, name);
         }
+        case NODE_IDENTIFIER: {
+                bool found;
+                Ref *slotp = hashmap_get(s->slots, n->data.identifier.name, &found);
+                if (!found) quil_error(STAGE_CODEGEN, ERR_UNDECLARED_VAR, n->data.identifier.name);
+                Ref slot = *slotp;
+                int cls = quil_to_cls(n->resolved_type);
+                if (cls == Kl) return il_create_load_l(s->ilb, slot);
+                if (cls == Ks) return il_create_load_s(s->ilb, slot);
+                if (cls == Kd) return il_create_load_d(s->ilb, slot);
+                return il_create_load_w(s->ilb, slot); // Kw bool char int8/16/32
+        }
         /* binray unary ternary expressions */
         case NODE_BINARY_EXPRESSION: {
                 Ref l = emit_expr(s, n->data.binary_expression.left);

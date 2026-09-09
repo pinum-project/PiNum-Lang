@@ -221,6 +221,8 @@ ASTnode *make_func_def_node(char *return_type, char *name, ASTnode **params, int
         node->data.func_def.params = params;
         node->data.func_def.param_count = param_count;
         node->data.func_def.body = body;
+        node->data.func_def.is_public = false;
+        node->data.func_def.is_extern = false;
         return node;
 }
 ASTnode *make_directive_node(char *name, char *value) {

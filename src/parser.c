@@ -32,8 +32,29 @@ ASTnode *parse_program(Parser *parser) {
                 if (match(parser, TOKEN_NLINE)) {
                         continue;
                 }
-                if (match(parser, TOKEN_FN)) {
-                        ast_add_statement(program, parse_func_def(parser));
+                if (check(parser, TOKEN_FN) || check(parser, TOKEN_PUBLIC) || check(parser, TOKEN_EXTERN)) {
+                        bool is_public = false, is_extern = false;
+                        if (match(parser, TOKEN_PUBLIC)) is_public = true;
+                        if (match(parser, TOKEN_EXTERN)) is_extern = true;
+                        // allow `public extern fn` as well
+                        if (!is_public && match(parser, TOKEN_PUBLIC)) is_public = true;
+                        if (!is_extern && match(parser, TOKEN_EXTERN)) is_extern = true;
+                        if (!match(parser, TOKEN_FN)) {
+                                token t = peek(parser);
+                                quil_expected_at(STAGE_PARSER, t.line, t.col, "'fn' after 'public'/'extern'", peek_display(parser));
+                        }
+                        ASTnode *fn = parse_func_def(parser);
+                        fn->data.func_def.is_public = is_public;
+                        fn->data.func_def.is_extern = is_extern;
+                        if (is_extern) {
+                                // extern prototype: no body, consume ';' / newline like declaration
+                                if (fn->data.func_def.body) {
+                                        free_ast_node(fn->data.func_def.body);
+                                        fn->data.func_def.body = NULL;
+                                }
+                                consume_end_of_statement(parser);
+                        }
+                        ast_add_statement(program, fn);
                         continue;
                 }
                 ast_add_statement(program, parse_statement(parser));
@@ -42,9 +63,27 @@ ASTnode *parse_program(Parser *parser) {
 }
 // - statement level parsing -
 ASTnode *parse_statement(Parser *parser) {
-        if (check(parser, TOKEN_FN)) {
-                advance(parser); // consume 'fn'
-                return parse_func_def(parser);
+        if (check(parser, TOKEN_FN) || check(parser, TOKEN_PUBLIC) || check(parser, TOKEN_EXTERN)) {
+                bool is_public = false, is_extern = false;
+                if (match(parser, TOKEN_PUBLIC)) is_public = true;
+                if (match(parser, TOKEN_EXTERN)) is_extern = true;
+                if (!is_public && match(parser, TOKEN_PUBLIC)) is_public = true;
+                if (!is_extern && match(parser, TOKEN_EXTERN)) is_extern = true;
+                if (!match(parser, TOKEN_FN)) {
+                        token t = peek(parser);
+                        quil_expected_at(STAGE_PARSER, t.line, t.col, "'fn' after 'public'/'extern'", peek_display(parser));
+                }
+                ASTnode *fn = parse_func_def(parser);
+                fn->data.func_def.is_public = is_public;
+                fn->data.func_def.is_extern = is_extern;
+                if (is_extern) {
+                        if (fn->data.func_def.body) {
+                                free_ast_node(fn->data.func_def.body);
+                                fn->data.func_def.body = NULL;
+                        }
+                        consume_end_of_statement(parser);
+                }
+                return fn;
         }
         if (check(parser, TOKEN_INT8) || check(parser, TOKEN_INT16) ||
             check(parser, TOKEN_INT32) || check(parser, TOKEN_INT64) ||
@@ -381,7 +420,10 @@ ASTnode *parse_func_def(Parser *parser) {
                 return_type = "void";
         }
 
-        ASTnode *body = parse_block(parser);
+        ASTnode *body = NULL;
+        if (check(parser, TOKEN_LCPAREN)) {
+                body = parse_block(parser);
+        }
         ASTnode *def = make_func_def_node(return_type, func_name.value, params, param_count, body);
         return def;
 }

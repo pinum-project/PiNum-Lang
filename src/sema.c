@@ -258,6 +258,8 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                 fs->return_type = node->data.func_def.return_type ? strdup(node->data.func_def.return_type) : strdup("void");
                 fs->param_count = node->data.func_def.param_count;
                 fs->param_types = NULL;
+                fs->is_public = node->data.func_def.is_public;
+                fs->is_extern = node->data.func_def.is_extern;
                 // add functions parameter types if there are
                 if (fs->param_count > 0) {
                         fs->param_types = malloc(sizeof(char *) * fs->param_count);
@@ -283,6 +285,11 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                         funcSig_free(fs);
                         free(qname);
                         quil_error_at(STAGE_SEMANTIC, ERR_DUPLICATED_FUNC, node->line, node->col, node->data.func_def.name);
+                }
+
+                // extern prototype has no body to analyze
+                if (node->data.func_def.is_extern) {
+                        break;
                 }
 
                 // make params visible inside the function, in the function's OWN scope
@@ -356,11 +363,14 @@ void semantic_analyze(ASTnode *program) {
         a.functions = hashmap_create(hm_hash_str, hm_eq_str, free, funcSig_free);
         sem_analyze_node(&a, program);
 
-        // check for fn main()
+        // check for fn main() - must be public fn main()
         bool found = false;
-        hashmap_get(a.functions, "main", &found); // note: 'a' is a value here → a.functions
+        funcSig *mainsig = hashmap_get(a.functions, "main", &found);
         if (!found) {
                 quil_error_at(STAGE_SEMANTIC, ERR_NO_MAIN, program->line, program->col, NULL);
+        }
+        if (!mainsig->is_public) {
+                quil_error_at(STAGE_SEMANTIC, ERR_MAIN_NOT_PUBLIC, program->line, program->col, NULL);
         }
 
         hashmap_free(a.functions);

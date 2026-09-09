@@ -152,6 +152,9 @@ static void print_error_message(ErrorStage stage, ErrorCode code, int line, int 
         case ERR_NO_MAIN:
                 fprintf(stderr, "no 'fn main()' entry point defined");
                 break;
+        case ERR_MAIN_NOT_PUBLIC:
+                fprintf(stderr, "main must be declared as 'public fn main()'");
+                break;
         case ERR_TOP_LEVEL_STMT:
                 fprintf(stderr, "statement not allowed at top level; put it inside 'fn main()'");
                 break;

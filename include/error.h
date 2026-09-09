@@ -52,6 +52,7 @@ typedef enum {
         ERR_ARG_COUNT,       // function called with wrong number of args
         ERR_DUPLICATED_FUNC, // function name defined more than once
         ERR_NO_MAIN,         // program has no 'fn main()' entry point
+        ERR_MAIN_NOT_PUBLIC, // main must be public
         ERR_TOP_LEVEL_STMT,  // statement at file scope that isn't a declaration
 
         // File / CLI errors

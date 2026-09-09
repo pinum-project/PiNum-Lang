@@ -30,6 +30,8 @@ typedef struct {
         char *return_type;
         char **param_types;
         size_t param_count;
+        bool is_public;
+        bool is_extern;
 } funcSig;
 
 // entry point

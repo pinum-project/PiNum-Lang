@@ -647,6 +647,18 @@ token lexer_tokenize_words(FILE *buffer) {
                 } else {
                         tokens.type = TOKEN_SCOPE;
                 }
+        } else if (strcmp(char_buffer, "public") == 0) {
+                if (SQUOTE_MODE || DQUOTE_MODE) {
+                        tokens.type = TOKEN_QSTRING;
+                } else {
+                        tokens.type = TOKEN_PUBLIC;
+                }
+        } else if (strcmp(char_buffer, "extern") == 0) {
+                if (SQUOTE_MODE || DQUOTE_MODE) {
+                        tokens.type = TOKEN_QSTRING;
+                } else {
+                        tokens.type = TOKEN_EXTERN;
+                }
         } else if (strcmp(char_buffer, "read") == 0) {
                 if (SQUOTE_MODE || DQUOTE_MODE) {
                         tokens.type = TOKEN_QSTRING;
@@ -865,6 +877,10 @@ const char *lexer_token_type_to_string(tokenType type) {
                 return "TOKEN_STRING";
         case TOKEN_VEC:
                 return "TOKEN_VEC";
+        case TOKEN_PUBLIC:
+                return "TOKEN_PUBLIC";
+        case TOKEN_EXTERN:
+                return "TOKEN_EXTERN";
         case TOKEN_TRUE:
                 return "TOKEN_TRUE";
         case TOKEN_FALSE:
