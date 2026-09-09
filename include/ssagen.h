@@ -20,6 +20,6 @@
 void ssagen_apply_options(const char *target, int optlevel);
 
 Fn *ssagen_build(ASTnode *prog);
-void ssagen_emit_asm(Fn *fn, FILE *out);
+void ssagen_emit_asm(IlModule *mod, FILE *out);
 
 #endif // !SSAGEN_H

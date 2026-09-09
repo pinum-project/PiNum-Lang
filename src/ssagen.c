@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 // would have been defined feather/main.c
 Target T;
@@ -64,8 +65,8 @@ static Ref emit_expr(Ssagen *s, ASTnode *n) {
         }
         case NODE_FLOAT_LITERAL: {
                 int cls = quil_to_cls(n->resolved_type);
-                if (cls == Kd) return il_const_float_s(s->ilb, (int64_t)n->data.int_literal.value);
-                return il_const_float_s(s->ilb, n->data.int_literal.value);
+                if (cls == Kd) return il_const_float_d(s->ilb, n->data.float_literal.value);
+                return il_const_float_s(s->ilb, (float)n->data.float_literal.value);
         }
         case NODE_BOOL_LITERAL:
                 return il_const_int_w(s->ilb, n->data.bool_literal.value ? 1 : 0);
@@ -85,6 +86,86 @@ static Ref emit_expr(Ssagen *s, ASTnode *n) {
                 il_module_add_data(s->mod, data);
                 // return address of data
                 return il_global_sym(s->ilb, name);
+        }
+        /* binray unary ternary expressions */
+        case NODE_BINARY_EXPRESSION: {
+                Ref l = emit_expr(s, n->data.binary_expression.left);
+                Ref r = emit_expr(s, n->data.binary_expression.right);
+                tokenType op = n->data.binary_expression.op;
+                int cls = quil_to_cls(n->resolved_type);
+                if (cls == Kd) {
+                        switch (op) {
+                        case TOKEN_PLUS: return il_create_add_d(s->ilb, l, r);
+                        case TOKEN_MINUS: return il_create_sub_d(s->ilb, l, r);
+                        case TOKEN_STAR: return il_create_mul_d(s->ilb, l, r);
+                        case TOKEN_FSLASH: return il_create_div_d(s->ilb, l, r);
+                        default: break;
+                        }
+                } else if (cls == Ks) {
+                        switch (op) {
+                        case TOKEN_PLUS: return il_create_add_s(s->ilb, l, r);
+                        case TOKEN_MINUS: return il_create_sub_s(s->ilb, l, r);
+                        case TOKEN_STAR: return il_create_mul_s(s->ilb, l, r);
+                        case TOKEN_FSLASH: return il_create_div_s(s->ilb, l, r);
+                        default: break;
+                        }
+                } else if (cls == Kl) {
+                        switch (op) {
+                        case TOKEN_PLUS: return il_create_add_l(s->ilb, l, r);
+                        case TOKEN_MINUS: return il_create_sub_l(s->ilb, l, r);
+                        case TOKEN_STAR: return il_create_mul_l(s->ilb, l, r);
+                        case TOKEN_FSLASH: return il_create_div_l(s->ilb, l, r);
+                        case TOKEN_PERCENT: return il_create_rem_l(s->ilb, l, r);
+                        case TOKEN_AND: return il_create_and_l(s->ilb, l, r);
+                        case TOKEN_PIPE: return il_create_or_l(s->ilb, l, r);
+                        case TOKEN_CARET: return il_create_xor_l(s->ilb, l, r);
+                        default: break;
+                        }
+                        // comparisons
+                        if (op == TOKEN_EEQUAL) return il_create_icmp_eq_l(s->ilb, l, r);
+                        if (op == TOKEN_NEQUAL) return il_create_icmp_ne_l(s->ilb, l, r);
+                        if (op == TOKEN_LABRACKET) return il_create_icmp_slt_l(s->ilb, l, r);
+                        if (op == TOKEN_RABRACKET) return il_create_icmp_sgt_l(s->ilb, l, r);
+                        if (op == TOKEN_LEQUAL) return il_create_icmp_sle_l(s->ilb, l, r);
+                        if (op == TOKEN_GEQUAL) return il_create_icmp_sge_l(s->ilb, l, r);
+                } else /* Kw */ {
+                        switch (op) {
+                        case TOKEN_PLUS: return il_create_add_w(s->ilb, l, r);
+                        case TOKEN_MINUS: return il_create_sub_w(s->ilb, l, r);
+                        case TOKEN_STAR: return il_create_mul_w(s->ilb, l, r);
+                        case TOKEN_FSLASH: return il_create_div_w(s->ilb, l, r);
+                        case TOKEN_PERCENT: return il_create_rem_w(s->ilb, l, r);
+                        case TOKEN_AND: return il_create_and_w(s->ilb, l, r);
+                        case TOKEN_PIPE: return il_create_or_w(s->ilb, l, r);
+                        case TOKEN_CARET: return il_create_xor_w(s->ilb, l, r);
+                        default: break;
+                        }
+                        if (op == TOKEN_EEQUAL) return il_create_icmp_eq_w(s->ilb, l, r);
+                        if (op == TOKEN_NEQUAL) return il_create_icmp_ne_w(s->ilb, l, r);
+                        if (op == TOKEN_LABRACKET) return il_create_icmp_slt_w(s->ilb, l, r);
+                        if (op == TOKEN_RABRACKET) return il_create_icmp_sgt_w(s->ilb, l, r);
+                        if (op == TOKEN_LEQUAL) return il_create_icmp_sle_w(s->ilb, l, r);
+                        if (op == TOKEN_GEQUAL) return il_create_icmp_sge_w(s->ilb, l, r);
+                        if (op == TOKEN_OR) return il_create_or_w(s->ilb, l, r);
+                        if (op == TOKEN_AND) return il_create_and_w(s->ilb, l, r);
+                }
+                return l;
+        }
+        case NODE_UNARY_EXPRESSION: {
+                Ref v = emit_expr(s, n->data.unary_expression.left);
+                tokenType op = n->data.unary_expression.op;
+                int cls = quil_to_cls(n->resolved_type);
+                if (op == TOKEN_MINUS) {
+                        if (cls == Kd) return il_create_neg_d(s->ilb, v);
+                        if (cls == Ks) return il_create_neg_s(s->ilb, v);
+                        if (cls == Kl) return il_create_neg_l(s->ilb, v);
+                        return il_create_neg_w(s->ilb, v);
+                }
+                if (op == TOKEN_EXCLAMATION) {
+                        // !a  ->  a == 0  (Kw bool 0/1)
+                        return il_create_icmp_eq_w(s->ilb, v, il_const_zero(s->ilb));
+                }
+                quil_error(STAGE_CODEGEN, ERR_UNKNOWN, lexer_token_type_to_string(op));
         }
         default:
                 quil_error(STAGE_CODEGEN, ERR_UNKNOWN, node_type_name(n->type));
@@ -118,9 +199,10 @@ void ssagen_apply_options(const char *target, int level) {
         }
         quil_error(STAGE_FILE, ERR_INVALID_TARGET, target);
 }
-Fn *ssagen(ASTnode *prog) {
-        //
+Fn *ssagen_build(ASTnode *prog) {
+        IlModule *mod = il_module_create();
+        Ssagen sg = {.ilb = NULL, .mod = mod, .slots = NULL};
 }
-void ssagen_emit_asm(Fn *fn, FILE *out) {
-        //
+void ssagen_emit_asm(IlModule *mod, FILE *out) {
+        il_module_emit(mod, out);
 }
