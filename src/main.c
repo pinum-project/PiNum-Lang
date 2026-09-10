@@ -140,17 +140,26 @@ int main(int argc, char *argv[]) {
 
         // --- CODE GENERATION (single backend: ssagen -> feather -> asm) ---
         // codegen_c kept on disk for reference but excluded from pipeline
-        if (opts.emit == CLI_EMIT_SSA) {
-                // needs a .ssa text emitter in the backend; not available yet
-                quil_error(STAGE_CODEGEN, ERR_EMIT_UNSUPPORTED, "ssa");
-        }
-        bool keep_asm = (opts.emit == CLI_EMIT_ASM);
+        bool is_ssa = (opts.emit == CLI_EMIT_SSA);
+        bool keep_asm = (opts.emit == CLI_EMIT_ASM) || is_ssa;
         char asm_buf[1024];
+        char ext[8];
+        if (is_ssa) strcpy(ext, ".ssa");
+        else if (keep_asm) strcpy(ext, ".s");
+        else strcpy(ext, ".tmp.s");
         char *asm_path = keep_asm ? "a.out.s" : "a.out.tmp.s";
+        if (is_ssa && !keep_asm) asm_path = "a.out.ssa";
         if (opts.out_mode == CLI_OUT_BINARY) {
-                snprintf(asm_buf, sizeof(asm_buf), "%s%s", opts.out_name, keep_asm ? ".s" : ".tmp.s");
+                snprintf(asm_buf, sizeof(asm_buf), "%s%s", opts.out_name, ext);
                 asm_path = asm_buf;
         }
+        if (is_ssa) strcpy(asm_buf, asm_path); // keep for later
+        IlModule *mod = ssagen_build(ast); // prog->statements include/ast.h:86 scope cur_ns src/sema.c:346
+        FILE *f = fopen(asm_path, "w");
+        if (!f) quil_error(STAGE_CODEGEN, ERR_CANNOT_OPEN_FILE, asm_path);
+        if (is_ssa) ssagen_emit_ssa(mod, f);
+        else ssagen_emit_asm(mod, f);
+        fclose(f);
 
         free_ast_node(ast);
         // freeing the list and its tokens' values

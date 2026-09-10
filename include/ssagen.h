@@ -19,7 +19,8 @@
 // selects T (NULL = host default from feather/config.h) and sets optlevel.
 void ssagen_apply_options(const char *target, int optlevel);
 
-Fn *ssagen_build(ASTnode *prog);
+IlModule *ssagen_build(ASTnode *prog);
 void ssagen_emit_asm(IlModule *mod, FILE *out);
+void ssagen_emit_ssa(IlModule *mod, FILE *out);
 
 #endif // !SSAGEN_H
