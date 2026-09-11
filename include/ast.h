@@ -56,8 +56,6 @@ typedef enum {
         NODE_IMPORT,    // Import/include another module.
         NODE_DIRECTIVE, // Directive (e.g., @import, @for)
         NODE_RETURN,    // Return from a function.
-        NODE_PRINT,     // Built-in print statement.
-        NODE_READ,      // Built-in read/input statement.
         NODE_BREAK,     // Break from a loop.
         NODE_CONTINUE,  // Continue to next loop iteration.
         NODE_LIST_LITERAL, // List literal (e.g., [1, 2, 3]).
@@ -228,14 +226,6 @@ struct ASTnode {
                 struct {
                         ASTnode *expression;
                 } returns;
-                struct {
-                        ASTnode **args;
-                        int arg_count;
-                        bool newline; // true for println (append trailing '\n')
-                } print;
-                struct {
-                        char *name;
-                } read;
                 // NODE_LIST_LITERAL: [elem1, elem2, ...]
                 struct {
                         ASTnode **elements;
@@ -276,8 +266,6 @@ ASTnode *make_assign_node(char *name, ASTnode *value);
 ASTnode *make_array_assign_node(char *name, ASTnode *index, ASTnode *value);
 ASTnode *make_func_call_node(char *name, ASTnode **args, int arg_count);
 ASTnode *make_func_def_node(char *return_type, char *name, ASTnode **params, int param_count, ASTnode *body);
-ASTnode *make_print_node(void);
-ASTnode *make_read_node(char *name);
 ASTnode *make_list_literal_node(ASTnode **elements, int count);
 ASTnode *make_member_access_node(ASTnode *object, char *member, ASTnode **args, int arg_count);
 ASTnode *make_namespace_node(char *name, ASTnode *body);

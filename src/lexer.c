@@ -575,18 +575,6 @@ token lexer_tokenize_words(FILE *buffer) {
                 tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_FLOAT32;
         } else if (strcmp(char_buffer, "float64") == 0) {
                 tokens.type = SQUOTE_MODE || DQUOTE_MODE ? TOKEN_QSTRING : TOKEN_FLOAT64;
-        } else if (strcmp(char_buffer, "print") == 0) {
-                if (SQUOTE_MODE || DQUOTE_MODE) {
-                        tokens.type = TOKEN_QSTRING;
-                } else {
-                        tokens.type = TOKEN_PRINT;
-                }
-        } else if (strcmp(char_buffer, "println") == 0) {
-                if (SQUOTE_MODE || DQUOTE_MODE) {
-                        tokens.type = TOKEN_QSTRING;
-                } else {
-                        tokens.type = TOKEN_PRINTLN;
-                }
         } else if (strcmp(char_buffer, "if") == 0) {
                 if (SQUOTE_MODE || DQUOTE_MODE) {
                         tokens.type = TOKEN_QSTRING;
@@ -658,12 +646,6 @@ token lexer_tokenize_words(FILE *buffer) {
                         tokens.type = TOKEN_QSTRING;
                 } else {
                         tokens.type = TOKEN_EXTERN;
-                }
-        } else if (strcmp(char_buffer, "read") == 0) {
-                if (SQUOTE_MODE || DQUOTE_MODE) {
-                        tokens.type = TOKEN_QSTRING;
-                } else {
-                        tokens.type = TOKEN_READ;
                 }
         } else if (strcmp(char_buffer, "long") == 0) {
                 tokens.type = TOKEN_ID;
@@ -835,12 +817,6 @@ const char *lexer_token_type_to_string(tokenType type) {
                 return "TOKEN_WHILE";
         case TOKEN_FOR:
                 return "TOKEN_FOR";
-        case TOKEN_PRINT:
-                return "TOKEN_PRINT";
-        case TOKEN_PRINTLN:
-                return "TOKEN_PRINTLN";
-        case TOKEN_READ:
-                return "TOKEN_READ";
         case TOKEN_RETURN:
                 return "TOKEN_RETURN";
         case TOKEN_BREAK:

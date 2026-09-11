@@ -381,43 +381,12 @@ static void codegen_node(ASTnode *node, FILE *output, int level) {
                 codegen_node(node->data.returns.expression, output, level);
                 fprintf(output, ";\n");
                 break;
-        case NODE_READ: {
-                const char *type = node->resolved_type;
-                if (type == NULL) {
-                        // can't pick a format specifier without knowing the variable's type
-                        fprintf(output, "// TODO: unknown type for read(%s)\n", node->data.read.name);
-                        break;
-                }
-                fprintf(output, "scanf(\"%s\", &%s);\n", specifier_for_type(type), node->data.read.name);
-                break;
-        }
         case NODE_BREAK:
                 fprintf(output, "break;");
                 break;
         case NODE_CONTINUE:
                 fprintf(output, "continue;");
                 break;
-
-        // ---- Built-in statements ----
-        case NODE_PRINT: {
-                int n = node->data.print.arg_count;
-                if (n > 0) {
-                        fprintf(output, "printf(\"");
-                        for (int j = 0; j < n; j++) {
-                                fprintf(output, "%s", codegen_specifier(node->data.print.args[j]));
-                        }
-                        fprintf(output, "\"");
-                        for (int j = 0; j < n; j++) {
-                                fprintf(output, ", ");
-                                codegen_node(node->data.print.args[j], output, level);
-                        }
-                        fprintf(output, ");\n");
-                }
-                if (node->data.print.newline) {
-                        fprintf(output, "printf(\"\\n\");\n");
-                }
-                break;
-        }
 
         // ---- Functions ----
         case NODE_FUNC_DEF: {

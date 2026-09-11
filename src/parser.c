@@ -91,40 +91,8 @@ ASTnode *parse_statement(Parser *parser) {
             check(parser, TOKEN_UINT32) || check(parser, TOKEN_UINT64) ||
             check(parser, TOKEN_FLOAT32) || check(parser, TOKEN_FLOAT64) ||
             check(parser, TOKEN_CHAR) || check(parser, TOKEN_STRING) ||
-            check(parser, TOKEN_BOOL) || check(parser, TOKEN_VEC)) {
+            check(parser, TOKEN_BOOL)) {
                 return parse_declaration(parser);
-        }
-        if (match(parser, TOKEN_PRINT)) {
-                token print_token = parser->tokens->tokens[parser->current - 1];
-                consume(parser, TOKEN_LRPAREN, "'(' after print");
-                ASTnode *node = make_print_node();
-                ast_set_loc(node, print_token.line, print_token.col);
-                if (!check(parser, TOKEN_RRPAREN)) {
-                        do {
-                                ast_add_print_arg(node, parse_expression(parser));
-                        } while (match(parser, TOKEN_COMMA));
-                }
-                consume(parser, TOKEN_RRPAREN, "')' after arguments");
-                consume_end_of_statement(parser);
-                return node;
-        }
-        if (match(parser, TOKEN_PRINTLN)) {
-                token println_token = parser->tokens->tokens[parser->current - 1];
-                consume(parser, TOKEN_LRPAREN, "'(' after println");
-                ASTnode *node = make_print_node();
-                node->data.print.newline = true;
-                ast_set_loc(node, println_token.line, println_token.col);
-                if (!check(parser, TOKEN_RRPAREN)) {
-                        do {
-                                ast_add_print_arg(node, parse_expression(parser));
-                        } while (match(parser, TOKEN_COMMA));
-                }
-                consume(parser, TOKEN_RRPAREN, "')' after arguments");
-                consume_end_of_statement(parser);
-                return node;
-        }
-        if (match(parser, TOKEN_READ)) {
-                return parse_read_statement(parser);
         }
         if (match(parser, TOKEN_IF)) {
                 return parse_if_statement(parser);
@@ -241,21 +209,11 @@ ASTnode *parse_for_statement(Parser *parser) {
         } else {
                 // for (range) {body}  OR  for (i = 0; cond; inc) {body}
                 ASTnode *range = parse_expression(parser);
-                // for (range)  →  for (int __quil_i<N> = 0; __quil_i<N> < RANGE; __quil_i<N>++)
+                // for (range) keeps range as init, cond/inc NULL -> backend emits 0 temp
                 if (check(parser, TOKEN_RRPAREN)) {
                         consume(parser, TOKEN_RRPAREN, "')'");
                         ASTnode *body = parse_block(parser);
-
-                        // generate uniques index name for each scope
-                        static int rng_counter = 0;
-                        const char *idx = "__quil_i";
-                        char idx_name[32];
-                        snprintf(idx_name, sizeof(idx_name), "%s%d", idx, rng_counter++);
-                        ASTnode *rinit = make_var_decl_node("int", NULL, (char *)idx_name, make_int_node(0), false, 0);
-                        ASTnode *cond = make_binary_node(make_identifier_node((char *)idx_name), TOKEN_LABRACKET, range);
-                        ASTnode *inc = make_assign_node((char *)idx_name,
-                                                        make_binary_node(make_identifier_node((char *)idx_name), TOKEN_PLUS, make_int_node(1)));
-                        return make_for_node(rinit, cond, inc, body);
+                        return make_for_node(range, NULL, NULL, body);
                 }
                 consume(parser, TOKEN_SEMICOLON, "';'");
                 init = range;
@@ -285,15 +243,6 @@ ASTnode *parse_return_statement(Parser *parser) {
         ASTnode *node = create_ast_node(NODE_RETURN);
         node->data.returns.expression = expression;
         ast_set_loc(node, kw.line, kw.col);
-        return node;
-}
-ASTnode *parse_read_statement(Parser *parser) {
-        consume(parser, TOKEN_LRPAREN, "'(' after read");
-        token name_token = consume(parser, TOKEN_ID, "a variable name");
-        consume(parser, TOKEN_RRPAREN, "')' after variable name");
-        consume_end_of_statement(parser);
-        ASTnode *node = make_read_node(name_token.value);
-        ast_set_loc(node, name_token.line, name_token.col);
         return node;
 }
 // parse a type: simple (int32, uint8, etc.)

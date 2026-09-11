@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
                 asm_path = asm_buf;
         }
         if (is_ssa) strcpy(asm_buf, asm_path); // keep for later
-        IlModule *mod = ssagen_build(ast); // prog->statements include/ast.h:86 scope cur_ns src/sema.c:346
+        IlModule *mod = ssagen_build(ast);     // prog->statements include/ast.h:86 scope cur_ns src/sema.c:346
         FILE *f = fopen(asm_path, "w");
         if (!f) quil_error(STAGE_CODEGEN, ERR_CANNOT_OPEN_FILE, asm_path);
         if (is_ssa) ssagen_emit_ssa(mod, f);

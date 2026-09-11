@@ -234,23 +234,8 @@ static void sem_analyze_node(SemAnalyzer *a, ASTnode *node) {
                         sem_analyze_node(a, node->data.returns.expression);
                 }
                 break;
-        case NODE_READ: {
-                const char *type = sem_resolve(a, node->data.read.name);
-                if (!type) {
-                        quil_error_at(STAGE_SEMANTIC, ERR_UNDECLARED_VAR, node->line, node->col, node->data.read.name);
-                }
-                node->resolved_type = strdup(type);
-                break;
-        }
         case NODE_BREAK: break;
         case NODE_CONTINUE: break;
-
-        // ---- Built-in statements ----
-        case NODE_PRINT:
-                for (int i = 0; i < node->data.print.arg_count; i++) {
-                        sem_analyze_node(a, node->data.print.args[i]);
-                }
-                break;
 
         // ---- Functions ----
         case NODE_FUNC_DEF: {

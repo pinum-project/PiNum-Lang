@@ -92,10 +92,6 @@ const char *node_type_name(nodeType type) {
                 return "directive";
         case NODE_RETURN:
                 return "return statement";
-        case NODE_PRINT:
-                return "print statement";
-        case NODE_READ:
-                return "read statement";
         case NODE_BREAK:
                 return "break statement";
         case NODE_CONTINUE:
@@ -231,14 +227,6 @@ ASTnode *make_directive_node(char *name, char *value) {
         node->data.directive.value = value ? strdup(value) : NULL;
         return node;
 }
-ASTnode *make_print_node(void) {
-        return create_ast_node(NODE_PRINT);
-}
-ASTnode *make_read_node(char *name) {
-        ASTnode *node = create_ast_node(NODE_READ);
-        node->data.read.name = strdup(name);
-        return node;
-}
 ASTnode *make_list_literal_node(ASTnode **elements, int count) {
         ASTnode *node = create_ast_node(NODE_LIST_LITERAL);
         node->data.list_literal.elements = elements;
@@ -332,17 +320,6 @@ void ast_add_param(ASTnode *func_def, ASTnode *param) {
         }
         func_def->data.func_def.params = (ASTnode **)realloc(func_def->data.func_def.params, sizeof(ASTnode *) * (func_def->data.func_def.param_count + 1));
         func_def->data.func_def.params[func_def->data.func_def.param_count++] = param;
-}
-/*
- * @brief Adds an argument to a print statement node.
- */
-void ast_add_print_arg(ASTnode *print, ASTnode *arg) {
-        // verifying correct node type
-        if (print->type != NODE_PRINT) {
-                return;
-        }
-        print->data.print.args = (ASTnode **)realloc(print->data.print.args, sizeof(ASTnode *) * (print->data.print.arg_count + 1));
-        print->data.print.args[print->data.print.arg_count++] = arg;
 }
 
 // --- Memory Management ---
@@ -458,15 +435,6 @@ void free_ast_node(ASTnode *node) {
                 break;
         case NODE_RETURN:
                 free_ast_node(node->data.returns.expression);
-                break;
-        case NODE_PRINT:
-                for (int i = 0; i < node->data.print.arg_count; i++) {
-                        free_ast_node(node->data.print.args[i]);
-                }
-                free(node->data.print.args);
-                break;
-        case NODE_READ:
-                free(node->data.read.name);
                 break;
         case NODE_BREAK:
         case NODE_CONTINUE:
@@ -598,15 +566,6 @@ void print_ast(ASTnode *node, int level) {
                 break;
         case NODE_DIRECTIVE:
                 printf("DIRECTIVE: @%s %s\n", node->data.directive.name, node->data.directive.value ? node->data.directive.value : "");
-                break;
-        case NODE_PRINT:
-                printf("PRINT\n");
-                for (int i = 0; i < node->data.print.arg_count; i++) {
-                        print_ast(node->data.print.args[i], level + 1);
-                }
-                break;
-        case NODE_READ:
-                printf("READ: %s\n", node->data.read.name);
                 break;
         case NODE_BREAK:
                 printf("BREAK\n");

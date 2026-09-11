@@ -292,13 +292,120 @@ static void emit_stmt(Ssagen *s, ASTnode *n) {
                 }
                 break;
         }
-        case NODE_IF_STAT:
-        case NODE_WHILE:
-        case NODE_FOR:
-        case NODE_PRINT:
-        case NODE_READ:
-                // TODO: implement control flow and IO later
+        case NODE_IF_STAT: {
+                Ref cond = emit_expr(s, n->data.if_stat.condition);
+                Blk *then_blk = il_create_block(s->ilb, "if.then");
+                Blk *else_blk = n->data.if_stat.else_block ? il_create_block(s->ilb, "if.else") : NULL;
+                Blk *merge = il_create_block(s->ilb, "if.merge");
+                if (else_blk) {
+                        il_create_cond_br(s->ilb, cond, then_blk, else_blk);
+                } else {
+                        il_create_cond_br(s->ilb, cond, then_blk, merge);
+                }
+
+                // then
+                il_set_insert_point(s->ilb, then_blk);
+                emit_stmt(s, n->data.if_stat.then_block);
+                if (s->ilb->cur) il_create_br(s->ilb, merge); // cur may be NULL if then had return
+
+                // else
+                if (else_blk) {
+                        il_set_insert_point(s->ilb, else_blk);
+                        emit_stmt(s, n->data.if_stat.else_block);
+                        if (s->ilb->cur) il_create_br(s->ilb, merge);
+                }
+                il_set_insert_point(s->ilb, merge);
                 break;
+        }
+        case NODE_WHILE: {
+                Blk *cond_blk = il_create_block(s->ilb, "while.cond");
+                Blk *body_blk = il_create_block(s->ilb, "while.body");
+                Blk *merge = il_create_block(s->ilb, "while.merge");
+
+                il_create_br(s->ilb, cond_blk);
+                il_set_insert_point(s->ilb, cond_blk);
+                Ref cond = emit_expr(s, n->data.while_loop.condition);
+
+                il_create_cond_br(s->ilb, cond, body_blk, merge);
+                il_set_insert_point(s->ilb, body_blk);
+                emit_stmt(s, n->data.while_loop.body);
+                if (s->ilb->cur) il_create_br(s->ilb, cond_blk);
+                il_set_insert_point(s->ilb, merge);
+                break;
+        }
+        case NODE_FOR: {
+                // for(init; cond; inc) { body }  and  for(range) { body }  sugar
+                // is_range: for(5) -> init=range_expr(5), cond=NULL, inc=NULL, init!=VAR_DECL src/parser.c:212
+                bool is_range = n->data.for_loop.init && !n->data.for_loop.condition && !n->data.for_loop.increment && n->data.for_loop.init->type != NODE_VAR_DECL;
+                if (is_range) {
+                        // backend 0 temp: user can't write "0" as ID (TOKEN_INUM include/lexer.h:22), so no collision
+                        static int range_id = 0; // unique per for(range) nesting
+                        char name[16];
+                        snprintf(name, sizeof(name), "%d", range_id++); // "0","1",...
+                        // alloc counter slot (Kw 4 bytes) and init to 0
+                        Ref ctr_slot = il_create_alloc4(s->ilb, il_const_int_w(s->ilb, 4)); // l addr, Kw slot
+                        Ref *rp = emalloc(sizeof(Ref));
+                        *rp = ctr_slot;
+                        hashmap_put(s->slots, strdup(name), rp);                        // slots name->Ref for load/store
+                        il_create_store_w(s->ilb, il_const_int_w(s->ilb, 0), ctr_slot); // ctr = 0
+
+                        // range value (e.g. 5 or var) evaluated once before loop
+                        Ref range_val = emit_expr(s, n->data.for_loop.init); // Kw
+                        // blocks: cond -> body -> merge
+                        Blk *cond_blk = il_create_block(s->ilb, "for.cond");
+                        Blk *body_blk = il_create_block(s->ilb, "for.body");
+                        Blk *merge = il_create_block(s->ilb, "for.merge");
+                        il_create_br(s->ilb, cond_blk); // jump to first condition check
+
+                        // cond block: cur < range ?
+                        il_set_insert_point(s->ilb, cond_blk);
+                        Ref cur = il_create_load_w(s->ilb, ctr_slot);            // load counter
+                        Ref cond = il_create_icmp_slt_w(s->ilb, cur, range_val); // cur < range (Kw bool)
+                        il_create_cond_br(s->ilb, cond, body_blk, merge);        // cur terminated
+
+                        // body block: emit user body
+                        il_set_insert_point(s->ilb, body_blk);
+                        emit_stmt(s, n->data.for_loop.body); // BLOCK include/ast.h:50
+                        if (s->ilb->cur) {                   // cur may be NULL if body had return
+                                // increment counter: ctr = ctr + 1
+                                Ref cur2 = il_create_load_w(s->ilb, ctr_slot);
+                                Ref inc = il_create_add_w(s->ilb, cur2, il_const_int_w(s->ilb, 1));
+                                il_create_store_w(s->ilb, inc, ctr_slot);
+                                il_create_br(s->ilb, cond_blk); // loop back
+                        }
+                        il_set_insert_point(s->ilb, merge); // continue after loop
+                } else {
+                        // normal for: for(init; cond; inc) { body } src/parser.c:194
+                        if (n->data.for_loop.init) emit_stmt(s, n->data.for_loop.init); // VAR_DECL or assign
+                        Blk *cond_blk = il_create_block(s->ilb, "for.cond");
+                        Blk *body_blk = il_create_block(s->ilb, "for.body");
+                        Blk *merge = il_create_block(s->ilb, "for.merge");
+                        il_create_br(s->ilb, cond_blk);
+
+                        // cond block: evaluate condition or unconditional jump
+                        il_set_insert_point(s->ilb, cond_blk);
+                        if (n->data.for_loop.condition) {
+                                Ref cond = emit_expr(s, n->data.for_loop.condition); // Kw bool
+                                il_create_cond_br(s->ilb, cond, body_blk, merge);
+                        } else {
+                                il_create_br(s->ilb, body_blk); // for(;;) infinite
+                        }
+
+                        // body
+                        il_set_insert_point(s->ilb, body_blk);
+                        emit_stmt(s, n->data.for_loop.body);
+                        if (s->ilb->cur) {
+                                if (n->data.for_loop.increment) {
+                                        // inc is often assign desugared from i++ src/parser.c:527
+                                        if (n->data.for_loop.increment->type == NODE_ASSIGN) emit_stmt(s, n->data.for_loop.increment);
+                                        else emit_expr(s, n->data.for_loop.increment);
+                                }
+                                il_create_br(s->ilb, cond_blk);
+                        }
+                        il_set_insert_point(s->ilb, merge);
+                }
+                break;
+        }
         default:
                 break;
         }
